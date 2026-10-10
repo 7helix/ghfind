@@ -1,134 +1,208 @@
 <!doctype html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>🐣 ghfind — github repo searcher</title>
-<meta name="description" content="A tiny cute GitHub repo searcher — pure Lua, single file, no deps.">
+<title>◇ GHFIND — repo searcher</title>
+<meta name="description" content="GitHub repo searcher — pure Lua, single file.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐣</text></svg>">
-<meta property="og:title" content="🐣 ghfind">
-<meta property="og:description" content="a tiny cute github repo searcher — pure lua">
+<meta property="og:title" content="◇ GHFIND">
+<meta property="og:description" content="github repo searcher — pure lua">
 <meta property="og:url" content="https://7helix.github.io/ghfind/">
 <meta name="twitter:card" content="summary">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Orbitron:wght@600;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<header><div class="wrap">
-  <div class="head-row">
-    <div>
-      <h1>🐣 ghfind</h1>
-      <p class="tagline">a tiny cute github repo searcher — pure lua</p>
+<div class="bg-grid"></div>
+<div class="bg-glow"></div>
+
+<nav class="topbar">
+  <a class="nav-logo" href="#top">
+    <span class="diamond">◇</span>
+    <span>GHFIND</span>
+  </a>
+  <div class="nav-links">
+    <a class="active" href="#top">HOME</a>
+    <a href="#search">SEARCH</a>
+    <a href="#" id="favs">FAVS<span class="badge" id="favc">0</span></a>
+    <a href="#" id="hist">HISTORY<span class="badge" id="histc">0</span></a>
+    <a href="#about">ABOUT</a>
+    <a class="cta" href="https://github.com/7helix/ghfind" target="_blank">◇ GITHUB</a>
+  </div>
+</nav>
+
+<section class="hero" id="top">
+  <div class="hero-left">
+    <div class="signal">
+      <span class="signal-dot"></span>
+      PUBLIC SIGNAL / ONLINE
     </div>
-    <div class="head-actions">
-      <button class="icon-btn" id="theme" title="toggle theme">🌙</button>
-      <button class="icon-btn" id="favs" title="favorites">⭐ <span id="favc">0</span></button>
-      <button class="icon-btn" id="hist" title="history">🕒 <span id="histc">0</span></button>
-      <button class="icon-btn" id="help" title="shortcuts">?</button>
+
+    <h1 class="hero-title">GHFIND</h1>
+
+    <div class="hero-tag">github search · pure lua · zero deps · single file</div>
+
+    <p class="hero-desc">
+      A tiny signal-tracking tool that scans GitHub's public network for
+      repositories matching your query. Reports stars, forks, language,
+      and last update. Runs offline in a single Lua file — no libraries,
+      no build step, no telemetry.
+    </p>
+
+    <div class="hero-actions">
+      <button class="btn-green" id="scroll-search">READ THE SOURCE</button>
+      <a class="btn-outline" href="https://github.com/7helix/ghfind" target="_blank">ENTER REPO</a>
+    </div>
+
+    <div class="info-boxes">
+      <div class="info-box">
+        <div class="k">NODE</div>
+        <div class="v">ghfind.co</div>
+      </div>
+      <div class="info-box">
+        <div class="k">MODE</div>
+        <div class="v">SEARCH</div>
+      </div>
+      <div class="info-box">
+        <div class="k">UTC</div>
+        <div class="v" id="utc">—</div>
+      </div>
     </div>
   </div>
-  <p class="badges">
-    <span class="badge">pure lua</span>
-    <span class="badge">no deps</span>
-    <span class="badge">single file</span>
-    <span class="badge">MIT</span>
-  </p>
-</div></header>
 
-<main class="wrap">
-
-  <section class="finder">
-    <div class="bar">
-      <span class="bar-icon">🔎</span>
-      <input id="q" type="text" placeholder="search github repos…  (press / to focus)" autocomplete="off" spellcheck="false">
-      <kbd class="bar-hint">/</kbd>
-      <button id="go">go</button>
+  <div class="hero-right">
+    <div class="orbit orbit-1"></div>
+    <div class="orbit orbit-2"></div>
+    <div class="orbit orbit-3"></div>
+    <div class="diamond-frame">
+      <div class="chick">🐣</div>
     </div>
-
-    <div class="filters">
-      <div class="chips" id="langs">
-        <button class="chip on" data-v="">any</button>
-        <button class="chip" data-v="lua">lua</button>
-        <button class="chip" data-v="python">python</button>
-        <button class="chip" data-v="rust">rust</button>
-        <button class="chip" data-v="go">go</button>
-        <button class="chip" data-v="javascript">js</button>
-        <button class="chip" data-v="typescript">ts</button>
-        <button class="chip" data-v="c">c</button>
-        <button class="chip" data-v="c++">c++</button>
-        <button class="chip" data-v="zig">zig</button>
-      </div>
-      <div class="chips right" id="sorts">
-        <button class="chip on" data-v="">best</button>
-        <button class="chip" data-v="stars">⭐ stars</button>
-        <button class="chip" data-v="forks">🍴 forks</button>
-        <button class="chip" data-v="updated">🕒 fresh</button>
-      </div>
+    <div class="hero-meta meta-l">
+      <div>CL/NODE::03</div>
+      <div>AUTH::PUBLIC</div>
+      <div>STATE::READ</div>
     </div>
-
-    <div class="row-3">
-      <div class="chips small" id="stars">
-        <span class="lbl">⭐</span>
-        <button class="chip on" data-v="">any</button>
-        <button class="chip" data-v="10">10+</button>
-        <button class="chip" data-v="100">100+</button>
-        <button class="chip" data-v="1000">1k+</button>
-        <button class="chip" data-v="10000">10k+</button>
-      </div>
-      <div class="chips small" id="age">
-        <span class="lbl">🕒</span>
-        <button class="chip on" data-v="">any</button>
-        <button class="chip" data-v="30">30d</button>
-        <button class="chip" data-v="180">6mo</button>
-        <button class="chip" data-v="365">1y</button>
-        <button class="chip" data-v="1095">3y</button>
-      </div>
-      <div class="chips small">
-        <button class="chip" id="random">🎲 random</button>
-        <button class="chip" id="trend">🔥 trending</button>
-        <button class="chip" id="view">▦ grid</button>
-      </div>
+    <div class="hero-meta meta-r">
+      <div>GHFIND</div>
+      <div>GATEWAY</div>
+      <div>ONLINE</div>
     </div>
+  </div>
+</section>
 
-    <div class="suggest">
-      <span class="lbl">try →</span>
-      <button class="tag" data-q="neovim colorscheme">neovim colorscheme</button>
-      <button class="tag" data-q="tui file manager">tui file manager</button>
-      <button class="tag" data-q="http server">http server</button>
-      <button class="tag" data-q="markdown parser">markdown parser</button>
-      <button class="tag" data-q="terminal game">terminal game</button>
-      <button class="tag" data-q="lua binding">lua binding</button>
-      <button class="tag" data-q="dotfiles">dotfiles</button>
-      <button class="tag" data-q="cli tool">cli tool</button>
+<section class="search-section" id="search">
+  <div class="section-head">
+    <span class="hash">◇</span>
+    <h2>SEARCH TERMINAL</h2>
+    <span class="line"></span>
+    <span class="dim">live</span>
+  </div>
+
+  <div class="bar">
+    <span class="prompt">&gt;</span>
+    <input id="q" type="text" placeholder="query repositories…   /  to focus" autocomplete="off" spellcheck="false">
+    <kbd>/</kbd>
+    <button id="go">RUN</button>
+  </div>
+
+  <div class="filters">
+    <div class="chips" id="langs">
+      <span class="lbl">// lang</span>
+      <button class="chip on" data-v="">any</button>
+      <button class="chip" data-v="lua">lua</button>
+      <button class="chip" data-v="python">python</button>
+      <button class="chip" data-v="rust">rust</button>
+      <button class="chip" data-v="go">go</button>
+      <button class="chip" data-v="javascript">js</button>
+      <button class="chip" data-v="typescript">ts</button>
+      <button class="chip" data-v="c">c</button>
+      <button class="chip" data-v="c++">c++</button>
+      <button class="chip" data-v="zig">zig</button>
     </div>
-
-    <p id="status" class="status"></p>
-    <div class="stats-bar" id="stats-bar" hidden></div>
-    <div id="grid" class="grid"></div>
-
-    <div class="more-wrap">
-      <button id="more" class="more" hidden>load more ↓</button>
+    <div class="chips right" id="sorts">
+      <span class="lbl">// sort</span>
+      <button class="chip on" data-v="">best</button>
+      <button class="chip" data-v="stars">★ stars</button>
+      <button class="chip" data-v="forks">⌥ forks</button>
+      <button class="chip" data-v="updated">◷ fresh</button>
     </div>
-  </section>
+  </div>
 
-  <section class="presets">
-    <h2>⚡ saved searches</h2>
-    <div class="preset-row" id="preset-row"></div>
-    <div class="preset-add">
-      <input id="preset-name" placeholder="name" maxlength="20">
-      <input id="preset-q" placeholder="query" maxlength="80">
-      <button id="preset-save">+ save current</button>
+  <div class="filters">
+    <div class="chips" id="stars">
+      <span class="lbl">★</span>
+      <button class="chip on" data-v="">any</button>
+      <button class="chip" data-v="10">10+</button>
+      <button class="chip" data-v="100">100+</button>
+      <button class="chip" data-v="1000">1k+</button>
+      <button class="chip" data-v="10000">10k+</button>
     </div>
-  </section>
+    <div class="chips" id="age">
+      <span class="lbl">◷</span>
+      <button class="chip on" data-v="">any</button>
+      <button class="chip" data-v="30">30d</button>
+      <button class="chip" data-v="180">6mo</button>
+      <button class="chip" data-v="365">1y</button>
+      <button class="chip" data-v="1095">3y</button>
+    </div>
+    <div class="chips right">
+      <button class="chip" id="random">⚄ random</button>
+      <button class="chip" id="trend">▴ trending</button>
+      <button class="chip" id="view">▦ grid</button>
+      <button class="chip" id="theme">◐ theme</button>
+      <button class="chip" id="help">? help</button>
+    </div>
+  </div>
 
-  <section class="install">
-    <h2>📥 install the cli</h2>
-    <pre><code>curl -O https://raw.githubusercontent.com/7helix/ghfind/main/ghfind.lua
-chmod +x ghfind.lua
-lua ghfind.lua "neovim colorscheme" --sort stars</code></pre>
-  </section>
+  <div class="suggest">
+    <span class="lbl">~/try</span>
+    <button class="tag" data-q="neovim colorscheme">neovim colorscheme</button>
+    <button class="tag" data-q="tui file manager">tui file manager</button>
+    <button class="tag" data-q="http server">http server</button>
+    <button class="tag" data-q="markdown parser">markdown parser</button>
+    <button class="tag" data-q="terminal game">terminal game</button>
+    <button class="tag" data-q="lua binding">lua binding</button>
+  </div>
 
-</main>
+  <p id="status" class="status"></p>
+  <div class="stats-bar" id="stats-bar" hidden></div>
+  <div id="grid" class="grid"></div>
+
+  <div class="more-wrap">
+    <button id="more" class="more" hidden>▾ LOAD MORE</button>
+  </div>
+</section>
+
+<section class="presets" id="about">
+  <div class="section-head">
+    <span class="hash">◇</span>
+    <h2>SAVED SIGNALS</h2>
+    <span class="line"></span>
+    <span class="dim">presets</span>
+  </div>
+  <div class="preset-row" id="preset-row"></div>
+  <div class="preset-add">
+    <input id="preset-name" placeholder="name" maxlength="20">
+    <input id="preset-q" placeholder="query" maxlength="80">
+    <button id="preset-save">+ SAVE</button>
+  </div>
+</section>
+
+<section class="install">
+  <div class="section-head">
+    <span class="hash">◇</span>
+    <h2>INSTALL THE CLI</h2>
+    <span class="line"></span>
+    <span class="dim">lua + curl</span>
+  </div>
+  <pre><code><span class="c-cy">$</span> curl -O https://raw.githubusercontent.com/7helix/ghfind/main/ghfind.lua
+<span class="c-cy">$</span> chmod +x ghfind.lua
+<span class="c-cy">$</span> lua ghfind.lua "neovim colorscheme" --sort stars</code></pre>
+</section>
 
 <div class="drawer" id="drawer" hidden>
   <div class="drawer-back" id="drawer-back"></div>
@@ -151,9 +225,9 @@ lua ghfind.lua "neovim colorscheme" --sort stars</code></pre>
 
 <div class="toast" id="toast"></div>
 
-<footer><div class="wrap">
-  <p><a href="https://github.com/7helix/ghfind">github</a> · MIT · made with 🐣</p>
-</div></footer>
+<div class="ticker">
+  <div class="ticker-track" id="ticker"></div>
+</div>
 
 <script>
 const $ = s => document.querySelector(s);
@@ -175,12 +249,12 @@ const ago = d => {
 };
 
 const LANG_COLORS = {
-  'Lua':'#000080','Python':'#3572A5','Rust':'#dea584','Go':'#00ADD8',
-  'JavaScript':'#f1e05a','TypeScript':'#3178c6','C':'#555','C++':'#f34b7d',
-  'Zig':'#ec915c','Java':'#b07219','Ruby':'#701516','Haskell':'#5e5086',
-  'Shell':'#89e051','Vim script':'#199f4b','Nix':'#7e7eff'
+  'Lua':'#00e5ff','Python':'#a8f04a','Rust':'#ff5c3d','Go':'#00d4ff',
+  'JavaScript':'#f7df1e','TypeScript':'#00a8ff','C':'#7a7a7a','C++':'#ff2e97',
+  'Zig':'#ff9d00','Java':'#ff7a3d','Ruby':'#ff2e63','Haskell':'#b47aff',
+  'Shell':'#4ade80','Vim script':'#7dff4d','Nix':'#7dc4ff'
 };
-const langColor = l => LANG_COLORS[l] || '#8be9fd';
+const langColor = l => LANG_COLORS[l] || '#00e5ff';
 
 const LS = {
   get(k, d) { try { return JSON.parse(localStorage.getItem('ghf_'+k)) ?? d } catch { return d } },
@@ -199,7 +273,6 @@ const state = {
 
 const savedTheme = LS.get('theme', null);
 if (savedTheme) document.documentElement.dataset.theme = savedTheme;
-$('#theme').textContent = document.documentElement.dataset.theme === 'dark' ? '🌙' : '☀️';
 
 async function ghSearch(q, page = 1) {
   let query = q;
@@ -255,27 +328,29 @@ function card(r, i) {
   const c = document.createElement('article');
   c.className = 'card';
   c.dataset.fn = r.full_name;
-  c.style.animationDelay = (i * 35) + 'ms';
+  c.style.animationDelay = (i * 30) + 'ms';
   const fav = isFav(r.full_name);
   c.innerHTML = `
+    <span class="c tl"></span><span class="c tr"></span>
+    <span class="c bl"></span><span class="c br"></span>
     <div class="card-head">
       <img class="avatar" src="${esc(r.owner?.avatar_url || '')}" alt="" loading="lazy">
       <a class="repo" href="${esc(r.html_url)}" target="_blank" rel="noopener">${esc(r.full_name)}</a>
-      <button class="fav ${fav?'on':''}" title="favorite">${fav?'★':'☆'}</button>
+      <button class="fav ${fav?'on':''}">${fav?'★':'☆'}</button>
     </div>
     <p class="desc">${esc(r.description || '—')}</p>
-    ${r.topics && r.topics.length ? `<div class="topics">${r.topics.slice(0,4).map(t => `<span class="topic">${esc(t)}</span>`).join('')}</div>` : ''}
+    ${r.topics && r.topics.length ? `<div class="topics">${r.topics.slice(0,4).map(t => `<span class="topic">#${esc(t)}</span>`).join('')}</div>` : ''}
     <div class="card-foot">
-      ${r.language ? `<span class="pill">${esc(r.language)}</span>` : ''}
-      <span class="metric">⭐ ${fmt(r.stargazers_count)}</span>
-      <span class="metric">🍴 ${fmt(r.forks_count)}</span>
-      <span class="metric dim">🕒 ${ago(r.updated_at)}</span>
+      ${r.language ? `<span class="pill" style="--lc:${langColor(r.language)}">${esc(r.language)}</span>` : ''}
+      <span class="metric">★ ${fmt(r.stargazers_count)}</span>
+      <span class="metric">⌥ ${fmt(r.forks_count)}</span>
+      <span class="metric dim">◷ ${ago(r.updated_at)}</span>
     </div>
     <div class="card-actions">
-      <a class="act" href="${esc(r.html_url)}" target="_blank" rel="noopener">open</a>
-      <button class="act copy" data-u="${esc(r.html_url)}">copy</button>
-      <button class="act share" data-fn="${esc(r.full_name)}">share</button>
-      <button class="act details">details</button>
+      <a class="act" href="${esc(r.html_url)}" target="_blank" rel="noopener">OPEN ↗</a>
+      <button class="act copy">COPY</button>
+      <button class="act share">SHARE</button>
+      <button class="act details">INFO</button>
     </div>`;
   c.querySelector('.fav').addEventListener('click', e => {
     e.preventDefault();
@@ -295,14 +370,8 @@ function card(r, i) {
     if (navigator.share) { try { await navigator.share({ title: r.full_name, url: u }) } catch {} }
     else { await navigator.clipboard.writeText(u); toast('link copied'); }
   });
-  c.querySelector('.details').addEventListener('click', e => {
-    e.preventDefault();
-    openRepoModal(r);
-  });
-  c.querySelector('.repo').addEventListener('click', e => {
-    e.preventDefault();
-    openRepoModal(r);
-  });
+  c.querySelector('.details').addEventListener('click', e => { e.preventDefault(); openRepoModal(r); });
+  c.querySelector('.repo').addEventListener('click', e => { e.preventDefault(); openRepoModal(r); });
   return c;
 }
 
@@ -310,7 +379,7 @@ function render(items, append = false) {
   const grid = $('#grid');
   if (!append) grid.innerHTML = '';
   if (!items.length && !append) {
-    grid.innerHTML = '<p class="empty">🫧 nothing found. try softer words?</p>';
+    grid.innerHTML = '<p class="empty">// no results. try softer words?</p>';
     $('#stats-bar').hidden = true;
     return;
   }
@@ -330,12 +399,12 @@ function showLangChart(items) {
   bar.innerHTML = '';
   const label = document.createElement('span');
   label.className = 'stat-pill';
-  label.innerHTML = '<b>languages</b>';
+  label.innerHTML = '<b>// lang</b>';
   bar.appendChild(label);
   sorted.forEach(([l, n]) => {
     const el = document.createElement('span');
     el.className = 'stat-pill';
-    el.innerHTML = `<span class="swatch" style="background:${langColor(l)}"></span>${esc(l)} <b>${n}</b>`;
+    el.innerHTML = `<span class="swatch" style="background:${langColor(l)};box-shadow:0 0 6px ${langColor(l)}"></span>${esc(l)} <b>${n}</b>`;
     el.addEventListener('click', () => {
       setChip('#langs', l.toLowerCase());
       state.lang = l.toLowerCase();
@@ -352,13 +421,13 @@ async function run(q, page = 1) {
   state.busy = true;
   state.q = q;
   state.page = page;
-  $('#status').textContent = '🔎 searching…';
+  $('#status').innerHTML = '<span class="dim">[ … ] scanning…</span>';
   $('#status').classList.remove('err');
   try {
     const d = await ghSearch(q.trim(), page);
     state.total = d.total_count || 0;
     state.results = d.items || [];
-    $('#status').textContent = `${fmt(state.total)} repos · showing ${state.results.length}`;
+    $('#status').innerHTML = `<span class="ok">[ ok ]</span> ${fmt(state.total)} repos <span class="dim">// showing ${state.results.length}</span>`;
     render(state.results, page > 1);
     $('#more').hidden = state.results.length < state.per || page * state.per >= Math.min(state.total, 1000);
     if (page === 1) pushHist(q.trim());
@@ -366,7 +435,7 @@ async function run(q, page = 1) {
     url.searchParams.set('q', q.trim());
     history.replaceState(null, '', url);
   } catch (e) {
-    $('#status').textContent = '😾 ' + e.message;
+    $('#status').innerHTML = '<span class="err-mark">[ err ]</span> ' + esc(e.message);
     $('#status').classList.add('err');
   } finally {
     state.busy = false;
@@ -387,12 +456,11 @@ const DEMOS = [
   { q: 'tui file manager',   lang: '', sort: 'stars' },
   { q: 'http server',        lang: 'lua', sort: 'stars' },
   { q: 'markdown parser',    lang: 'rust', sort: 'stars' },
-  { q: 'terminal game',      lang: 'c', sort: 'stars' },
-  { q: 'web framework',      lang: 'zig', sort: 'updated' }
+  { q: 'terminal game',      lang: 'c', sort: 'stars' }
 ];
 
 async function demoLoop() {
-  await sleep(700);
+  await sleep(900);
   while (state.demo) {
     for (const d of DEMOS) {
       if (!state.demo) return;
@@ -405,7 +473,7 @@ async function demoLoop() {
       await sleep(220);
       await run(d.q);
       if (!state.demo) return;
-      await sleep(3000);
+      await sleep(3200);
     }
   }
 }
@@ -441,27 +509,27 @@ async function openRepoModal(r) {
       <img class="m-av" src="${esc(r.owner?.avatar_url||'')}" alt="">
       <div style="flex:1;min-width:0">
         <h3 class="m-title">${esc(r.full_name)}</h3>
-        <div class="m-owner">by ${esc(r.owner?.login||'')}</div>
+        <div class="m-owner">// by ${esc(r.owner?.login||'')}</div>
         <p class="m-desc">${esc(r.description||'—')}</p>
       </div>
     </div>
     <div class="m-stats">
-      <div class="m-stat"><div class="v">${fmt(r.stargazers_count)}</div><div class="l">stars</div></div>
-      <div class="m-stat"><div class="v">${fmt(r.forks_count)}</div><div class="l">forks</div></div>
-      <div class="m-stat"><div class="v">${fmt(r.open_issues_count)}</div><div class="l">issues</div></div>
-      <div class="m-stat"><div class="v">${fmt(r.watchers_count)}</div><div class="l">watchers</div></div>
+      <div class="m-stat"><div class="v">${fmt(r.stargazers_count)}</div><div class="l">★ stars</div></div>
+      <div class="m-stat"><div class="v">${fmt(r.forks_count)}</div><div class="l">⌥ forks</div></div>
+      <div class="m-stat"><div class="v">${fmt(r.open_issues_count)}</div><div class="l">! issues</div></div>
+      <div class="m-stat"><div class="v">${fmt(r.watchers_count)}</div><div class="l">◉ watch</div></div>
       <div class="m-stat"><div class="v">${r.size ? (r.size>1024 ? Math.round(r.size/1024)+'MB' : r.size+'KB') : '—'}</div><div class="l">size</div></div>
       <div class="m-stat"><div class="v">${r.license?.spdx_id || '—'}</div><div class="l">license</div></div>
     </div>
-    ${r.topics && r.topics.length ? `<div class="m-topics">${r.topics.map(t => `<a class="m-topic" href="https://github.com/topics/${esc(t)}" target="_blank" rel="noopener">${esc(t)}</a>`).join('')}</div>` : ''}
-    <div id="m-readme" class="m-readme"><div class="m-loading">loading readme…</div></div>
+    ${r.topics && r.topics.length ? `<div class="m-topics">${r.topics.map(t => `<a class="m-topic" href="https://github.com/topics/${esc(t)}" target="_blank" rel="noopener">#${esc(t)}</a>`).join('')}</div>` : ''}
+    <div id="m-readme" class="m-readme"><div class="m-loading">// loading readme…</div></div>
     <div class="m-actions">
-      <a class="m-btn primary" href="${esc(r.html_url)}" target="_blank" rel="noopener">open on github</a>
-      <button class="m-btn" id="m-fav">${isFav(r.full_name) ? '★ unfavorite' : '☆ favorite'}</button>
-      <button class="m-btn" id="m-copy">copy url</button>
-      <button class="m-btn" id="m-clone">copy clone cmd</button>
-      <a class="m-btn" href="${esc(r.html_url)}/issues" target="_blank" rel="noopener">issues</a>
-      <a class="m-btn" href="${esc(r.html_url)}/releases" target="_blank" rel="noopener">releases</a>
+      <a class="m-btn primary" href="${esc(r.html_url)}" target="_blank" rel="noopener">OPEN ↗</a>
+      <button class="m-btn" id="m-fav">${isFav(r.full_name) ? '★ UNFAV' : '☆ FAV'}</button>
+      <button class="m-btn" id="m-copy">COPY URL</button>
+      <button class="m-btn" id="m-clone">COPY CLONE</button>
+      <a class="m-btn" href="${esc(r.html_url)}/issues" target="_blank" rel="noopener">ISSUES</a>
+      <a class="m-btn" href="${esc(r.html_url)}/releases" target="_blank" rel="noopener">RELEASES</a>
     </div>`;
   m.hidden = false;
   requestAnimationFrame(() => m.classList.add('on'));
@@ -469,7 +537,7 @@ async function openRepoModal(r) {
   body.querySelector('#m-fav').addEventListener('click', () => {
     toggleFav(r);
     const on = isFav(r.full_name);
-    body.querySelector('#m-fav').textContent = on ? '★ unfavorite' : '☆ favorite';
+    body.querySelector('#m-fav').textContent = on ? '★ UNFAV' : '☆ FAV';
     toast(on ? '★ saved' : 'removed');
   });
   body.querySelector('#m-copy').addEventListener('click', async () => {
@@ -486,10 +554,10 @@ async function openRepoModal(r) {
     });
     const txt = r2.ok ? await r2.text() : '';
     const el = body.querySelector('#m-readme');
-    if (!txt) { el.innerHTML = '<div class="m-loading">no readme</div>'; return; }
-    el.innerHTML = '<pre>' + esc(txt.slice(0, 2000)) + (txt.length > 2000 ? '\n\n… (truncated)' : '') + '</pre>';
+    if (!txt) { el.innerHTML = '<div class="m-loading">// no readme</div>'; return; }
+    el.innerHTML = '<pre>' + esc(txt.slice(0, 2000)) + (txt.length > 2000 ? '\n\n… truncated' : '') + '</pre>';
   } catch {
-    body.querySelector('#m-readme').innerHTML = '<div class="m-loading">readme unavailable</div>';
+    body.querySelector('#m-readme').innerHTML = '<div class="m-loading">// readme unavailable</div>';
   }
 }
 
@@ -507,13 +575,13 @@ function drawPresets() {
   const list = getPresets();
   row.innerHTML = '';
   if (!list.length) {
-    row.innerHTML = '<span style="color:var(--muted);font-size:.82rem">no presets yet — set filters, then save</span>';
+    row.innerHTML = '<span class="dim" style="font-size:.82rem">// no presets yet — set filters, then save</span>';
     return;
   }
   list.forEach((p, i) => {
     const el = document.createElement('button');
     el.className = 'preset';
-    el.innerHTML = `${esc(p.name)}<span class="x" data-i="${i}">✕</span>`;
+    el.innerHTML = `<span class="hash">◇</span>${esc(p.name)}<span class="x" data-i="${i}">✕</span>`;
     el.addEventListener('click', e => {
       if (e.target.classList.contains('x')) {
         e.stopPropagation();
@@ -543,14 +611,12 @@ $('#preset-save').addEventListener('click', () => {
   toast('preset saved');
 });
 
-$('#favs').addEventListener('click', () => {
-  openDrawer('⭐ favorites (' + state.favs.length + ')', box => {
+$('#favs').addEventListener('click', e => {
+  e.preventDefault();
+  openDrawer('★ favorites [' + state.favs.length + ']', box => {
     const tools = document.createElement('div');
     tools.className = 'row-tools';
-    tools.innerHTML = `
-      <button id="exp">export json</button>
-      <button id="imp">import</button>
-      <button class="danger" id="clrf">clear all</button>`;
+    tools.innerHTML = `<button id="exp">EXPORT</button><button id="imp">IMPORT</button><button class="danger" id="clrf">CLEAR</button>`;
     box.appendChild(tools);
 
     tools.querySelector('#exp').addEventListener('click', () => {
@@ -586,7 +652,7 @@ $('#favs').addEventListener('click', () => {
     });
 
     if (!state.favs.length) {
-      box.insertAdjacentHTML('beforeend', '<p class="empty">no favorites yet</p>');
+      box.insertAdjacentHTML('beforeend', '<p class="empty">// no favorites yet</p>');
       return;
     }
 
@@ -602,11 +668,11 @@ $('#favs').addEventListener('click', () => {
             <div class="row-title">${esc(f.full_name)}</div>
             <div class="row-sub">${esc(f.description||'')}</div>
           </div>
-          <span class="row-met">⭐ ${fmt(f.stars)}</span>
+          <span class="row-met">★ ${fmt(f.stars)}</span>
         </a>
-        <textarea class="fav-note" placeholder="note…" data-fn="${esc(f.full_name)}">${esc(f.note||'')}</textarea>
+        <textarea class="fav-note" placeholder="// note…" data-fn="${esc(f.full_name)}">${esc(f.note||'')}</textarea>
         <div class="row-tools">
-          <button class="danger" data-rm="${esc(f.full_name)}">remove</button>
+          <button class="danger" data-rm="${esc(f.full_name)}">REMOVE</button>
         </div>`;
       wrap.querySelector('.fav-note').addEventListener('input', e => {
         const fn = e.target.dataset.fn;
@@ -625,10 +691,11 @@ $('#favs').addEventListener('click', () => {
   });
 });
 
-$('#hist').addEventListener('click', () => {
-  openDrawer('🕒 history', box => {
-    if (!state.hist.length) { box.innerHTML = '<p class="empty">no history</p>'; return; }
-    box.innerHTML = '<button class="act clear-all" id="clr-hist">clear all</button>';
+$('#hist').addEventListener('click', e => {
+  e.preventDefault();
+  openDrawer('▤ history', box => {
+    if (!state.hist.length) { box.innerHTML = '<p class="empty">// no history</p>'; return; }
+    box.innerHTML = '<button class="act clear-all" id="clr-hist">CLEAR ALL</button>';
     box.querySelector('#clr-hist').addEventListener('click', () => {
       state.hist = [];
       LS.set('hist', []);
@@ -638,7 +705,7 @@ $('#hist').addEventListener('click', () => {
     state.hist.forEach(h => {
       const el = document.createElement('button');
       el.className = 'row-item btn-row';
-      el.innerHTML = `<div class="row-txt"><div class="row-title">${esc(h)}</div></div>`;
+      el.innerHTML = `<div class="row-txt"><div class="row-title"><span class="hash">&gt;</span> ${esc(h)}</div></div>`;
       el.addEventListener('click', () => { $('#q').value = h; closeDrawer(); stopDemo(); run(h); });
       box.appendChild(el);
     });
@@ -646,7 +713,7 @@ $('#hist').addEventListener('click', () => {
 });
 
 $('#help').addEventListener('click', () => {
-  openDrawer('⌨ shortcuts', box => {
+  openDrawer('? shortcuts', box => {
     box.innerHTML = `
       <div class="row-item"><div class="row-txt"><div class="row-title">/</div><div class="row-sub">focus search</div></div></div>
       <div class="row-item"><div class="row-txt"><div class="row-title">enter</div><div class="row-sub">search</div></div></div>
@@ -661,6 +728,10 @@ $('#drawer-back').addEventListener('click', closeDrawer);
 $('#modal-close').addEventListener('click', closeModal);
 $('#modal-back').addEventListener('click', closeModal);
 
+$('#scroll-search').addEventListener('click', () => {
+  document.getElementById('search').scrollIntoView({ behavior: 'smooth' });
+});
+
 $('#go').addEventListener('click', () => { stopDemo(); run($('#q').value); });
 $('#q').addEventListener('keydown', e => {
   stopDemo();
@@ -670,10 +741,7 @@ $('#q').addEventListener('keydown', e => {
 $('#q').addEventListener('focus', stopDemo);
 $('#q').addEventListener('input', stopDemo);
 
-$('#more').addEventListener('click', () => {
-  state.page++;
-  run(state.q, state.page);
-});
+$('#more').addEventListener('click', () => { state.page++; run(state.q, state.page); });
 
 $('#random').addEventListener('click', async () => {
   stopDemo();
@@ -682,7 +750,7 @@ $('#random').addEventListener('click', async () => {
   if (!items.length) return toast('nothing');
   const r = items[Math.floor(Math.random() * items.length)];
   render([r]);
-  $('#status').textContent = '🎲 random pick';
+  $('#status').innerHTML = '<span class="ok">[ ok ]</span> ⚄ random pick';
   $('#more').hidden = true;
 });
 
@@ -707,7 +775,6 @@ $('#theme').addEventListener('click', () => {
   const next = cur === 'dark' ? 'light' : 'dark';
   document.documentElement.dataset.theme = next;
   LS.set('theme', next);
-  $('#theme').textContent = next === 'dark' ? '🌙' : '☀️';
 });
 
 $$('#langs .chip').forEach(c => c.addEventListener('click', () => {
@@ -716,28 +783,24 @@ $$('#langs .chip').forEach(c => c.addEventListener('click', () => {
   setChip('#langs', c.dataset.v);
   if ($('#q').value.trim()) run($('#q').value);
 }));
-
 $$('#sorts .chip').forEach(c => c.addEventListener('click', () => {
   stopDemo();
   state.sort = c.dataset.v;
   setChip('#sorts', c.dataset.v);
   if ($('#q').value.trim()) run($('#q').value);
 }));
-
 $$('#stars .chip').forEach(c => c.addEventListener('click', () => {
   stopDemo();
   state.stars = c.dataset.v;
   setChip('#stars', c.dataset.v);
   if ($('#q').value.trim()) run($('#q').value);
 }));
-
 $$('#age .chip').forEach(c => c.addEventListener('click', () => {
   stopDemo();
   state.age = c.dataset.v;
   setChip('#age', c.dataset.v);
   if ($('#q').value.trim()) run($('#q').value);
 }));
-
 $$('.tag').forEach(t => t.addEventListener('click', () => {
   stopDemo();
   $('#q').value = t.dataset.q;
@@ -756,6 +819,22 @@ document.addEventListener('keydown', e => {
   if (e.key === '?') $('#help').click();
 });
 
+// ── UTC clock ──
+function tickUTC() {
+  const d = new Date();
+  const p = n => String(n).padStart(2, '0');
+  $('#utc').textContent = `${d.getUTCFullYear()}-${p(d.getUTCMonth()+1)}-${p(d.getUTCDate())} ${p(d.getUTCHours())}:${p(d.getUTCMinutes())}:${p(d.getUTCSeconds())}`;
+}
+tickUTC();
+setInterval(tickUTC, 1000);
+
+// ── ticker ──
+const TICK = ['NETWORK CULTURE','GAME PRESERVATION','PLATFORM RESPONSE','GHFIND','PUBLIC SIGNAL','PURE LUA','ZERO DEPS','SINGLE FILE','OPEN SOURCE'];
+const tk = $('#ticker');
+const one = TICK.map(t => `<span class="tick"><span class="diamond">◇</span> ${t}</span>`).join('');
+tk.innerHTML = one + one;
+
+// ── init ──
 $('#favc').textContent = state.favs.length;
 $('#histc').textContent = state.hist.length;
 $('#grid').classList.toggle('list', state.view === 'list');
