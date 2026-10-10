@@ -1,0 +1,13 @@
+*.luac
+*.out
+.env
+.env.*
+*.token
+token.txt
+.secrets
+.vscode/
+.idea/
+*.swp
+*~
+.DS_Store
+Thumbs.db
