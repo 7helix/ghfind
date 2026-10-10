@@ -1,0 +1,17 @@
+name: test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y lua5.4
+      - run: lua5.4 ghfind.lua --help
+      - run: lua5.4 ghfind.lua --recommend
+      - run: lua5.4 ghfind.lua --check-token
+      - run: lua5.4 ghfind.lua "hello world" -n 1
