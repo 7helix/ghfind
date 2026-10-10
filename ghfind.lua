@@ -122,7 +122,7 @@ local function GET(u,h)
   cmd=cmd.." -H "..sh("User-Agent: ghfind-lua")
   if h then for _,v in ipairs(h) do cmd=cmd.." -H "..sh(v) end end
   cmd=cmd.." "..sh(u)
-  local f=io.popen(cmd,"r") if not f then return end end
+  local f=io.popen(cmd,"r") if not f then return end
   local r=f:read("*a") f:close()
   local hdr,bdy=r:match("^(.-)\r?\n\r?\n(.*)$")
   if not hdr then return nil,r end
@@ -136,7 +136,7 @@ local function HEAD(u)
   cmd=cmd.." -H "..sh("Accept: application/vnd.github+json")
   cmd=cmd.." -H "..sh("User-Agent: ghfind-lua")
   cmd=cmd.." "..sh(u)
-  local f=io.popen(cmd,"r") if not f then return end end
+  local f=io.popen(cmd,"r") if not f then return end
   local r=f:read("*a") f:close()
   return r
 end
