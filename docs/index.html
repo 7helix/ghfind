@@ -4,58 +4,80 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>🐣 ghfind</title>
+<meta name="description" content="A tiny cute GitHub repo searcher — pure Lua, single file, no deps.">
+
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐣</text></svg>">
+
+<meta property="og:title" content="🐣 ghfind">
+<meta property="og:description" content="a tiny cute github repo searcher — pure lua">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://7helix.github.io/">
+<meta name="twitter:card" content="summary">
+
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
 <header><div class="wrap">
-<h1>🐣 ghfind</h1>
-<p class="tagline">a tiny cute github repo searcher — pure lua</p>
-<p class="badges">
-<span class="badge">pure lua</span>
-<span class="badge">no deps</span>
-<span class="badge">single file</span>
-<span class="badge">MIT</span>
-</p>
-<p class="cta">
-<a class="btn primary" href="https://github.com/7helix/ghfind">⭐ GitHub</a>
-<a class="btn" href="#install">📥 Install</a>
-</p>
+  <h1>🐣 ghfind</h1>
+  <p class="tagline">a tiny cute github repo searcher — pure lua</p>
+  <p class="badges">
+    <span class="badge">pure lua</span>
+    <span class="badge">no deps</span>
+    <span class="badge">single file</span>
+    <span class="badge">MIT</span>
+  </p>
+  <p class="cta">
+    <a class="btn primary" href="https://github.com/7helix/7helix.github.io">⭐ GitHub</a>
+    <a class="btn" href="#install">📥 Install</a>
+  </p>
 </div></header>
 
 <main class="wrap">
-<section>
-<h2>✨ demo</h2>
-<pre><code>$ lua ghfind.lua "neovim colorscheme" --sort stars
 
-  🔎  neovim colorscheme
+  <section class="search-box">
+    <form id="f" autocomplete="off">
+      <input id="q" type="text" placeholder="search repos… e.g. neovim colorscheme" required>
+      <div class="row">
+        <select id="lang">
+          <option value="">any language</option>
+          <option>lua</option><option>python</option><option>rust</option>
+          <option>go</option><option>javascript</option><option>typescript</option>
+          <option>c</option><option>c++</option><option>java</option>
+          <option>ruby</option><option>haskell</option><option>zig</option>
+        </select>
+        <select id="sort">
+          <option value="">best match</option>
+          <option value="stars">stars</option>
+          <option value="forks">forks</option>
+          <option value="updated">updated</option>
+        </select>
+        <select id="limit">
+          <option>5</option><option>10</option><option>20</option><option>30</option>
+        </select>
+        <button type="submit">🔎 search</button>
+      </div>
+      <details class="adv">
+        <summary>advanced (optional token)</summary>
+        <p>Paste a GitHub token to raise the rate limit. Stored only in this tab, never sent anywhere but GitHub. Leave blank — no scopes needed.</p>
+        <input id="tok" type="password" placeholder="ghp_… (optional)">
+      </details>
+    </form>
+    <p id="status" class="status"></p>
+  </section>
 
-  1. folke/tokyonight.nvim   ⭐ 5.4k  🍴 341
-     A clean, dark Neovim theme.
-     Lua  2025-09-14
-     https://github.com/folke/tokyonight.nvim
+  <section id="results"></section>
 
-  2. catppuccin/nvim        ⭐ 5.1k  🍴 268
-     🍨 Soothing pastel theme.
-     Lua  2025-10-01
-     https://github.com/catppuccin/nvim
+  <section id="install">
+    <h2>📥 install the CLI</h2>
+    <pre><code>curl -O https://raw.githubusercontent.com/7helix/7helix.github.io/main/ghfind.lua
+chmod +x ghfind.lua
+lua ghfind.lua "neovim colorscheme" --sort stars</code></pre>
+  </section>
 
-  4.2k · 5</code></pre>
-</section>
-
-<section id="install">
-<h2>📥 install</h2>
-<pre><code>curl -O https://raw.githubusercontent.com/7helix/ghfind/main/ghfind.lua
-chmod +x ghfind.lua</code></pre>
-<pre><code># ubuntu/debian
-sudo apt install lua5.4 curl
-
-# macos
-brew install lua curl</code></pre>
-</section>
-
-<section>
-<h2>🚀 usage</h2>
-<pre><code>lua ghfind.lua "words" [opts]
+  <section>
+    <h2>🚀 usage</h2>
+    <pre><code>lua ghfind.lua "words" [opts]
 
   -l/--lang X      language
   -s/--sort X      stars|forks|updated
@@ -63,32 +85,104 @@ brew install lua curl</code></pre>
   -t/--check-token
   -r/--recommend
   -h/--help</code></pre>
-</section>
+  </section>
 
-<section>
-<h2>🔐 token</h2>
-<p>Optional. Raises rate limit. No scopes needed.</p>
-<pre><code>export GITHUB_TOKEN=ghp_xxx
+  <section>
+    <h2>🔐 token</h2>
+    <p>Optional. Raises rate limit. No scopes needed.</p>
+    <pre><code>export GITHUB_TOKEN=ghp_xxx
 # or
 echo ghp_xxx &gt; ~/.config/ghfind/token
 chmod 600 ~/.config/ghfind/token</code></pre>
-<pre><code>lua ghfind.lua --check-token
+    <pre><code>lua ghfind.lua --check-token
 lua ghfind.lua --recommend</code></pre>
-</section>
+  </section>
 
-<section>
-<h2>💖 why</h2>
-<ul>
-<li>single file, zero deps</li>
-<li>cute emoji output</li>
-<li>built-in token scope audit</li>
-<li>ships its own json parser</li>
-</ul>
-</section>
+  <section>
+    <h2>💖 why</h2>
+    <ul>
+      <li>single file, zero deps</li>
+      <li>cute emoji output</li>
+      <li>built-in token scope audit</li>
+      <li>ships its own json parser</li>
+    </ul>
+  </section>
+
 </main>
 
 <footer><div class="wrap">
-<p><a href="https://github.com/7helix/ghfind">github</a> · MIT · made with 🐣</p>
+  <p><a href="https://github.com/7helix/7helix.github.io">github</a> · MIT · made with 🐣</p>
 </div></footer>
+
+<script>
+const $  = s => document.querySelector(s);
+const el = (t,c,h) => { const e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e; };
+const esc = s => String(s??'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt = n => n>=1e6? (n/1e6).toFixed(1)+'M' : n>=1e3? (n/1e3).toFixed(1)+'k' : String(n);
+
+function token(){
+  const t = $('#tok').value.trim();
+  if (t) sessionStorage.setItem('ghf_tok', t);
+  return t || sessionStorage.getItem('ghf_tok') || '';
+}
+
+async function search(q, lang, sort, limit){
+  const params = new URLSearchParams({ q, per_page: limit });
+  if (lang) params.set('q', q + ' language:' + lang);
+  if (sort) { params.set('sort', sort); params.set('order', 'desc'); }
+
+  const headers = { Accept: 'application/vnd.github+json' };
+  const tk = token();
+  if (tk) headers.Authorization = 'Bearer ' + tk;
+
+  const r = await fetch('https://api.github.com/search/repositories?' + params, { headers });
+  const j = await r.json();
+  if (!r.ok) throw new Error(j.message || ('HTTP ' + r.status));
+  return j;
+}
+
+function render(items){
+  const box = $('#results');
+  box.innerHTML = '';
+  if (!items.length) {
+    box.appendChild(el('p','status','🫧 nothing found. try softer words?'));
+    return;
+  }
+  items.forEach((r,i) => {
+    const card = el('div','card');
+    card.innerHTML = `
+      <div class="card-top">
+        <span class="num">${i+1}.</span>
+        <a class="name" href="${esc(r.html_url)}" target="_blank" rel="noopener">${esc(r.full_name)}</a>
+        <span class="stat">⭐ ${fmt(r.stargazers_count)}</span>
+        <span class="stat">🍴 ${fmt(r.forks_count)}</span>
+      </div>
+      <p class="desc">${esc(r.description || '—')}</p>
+      <div class="meta">
+        <span>${esc(r.language || '—')}</span>
+        <span>🕒 ${(r.updated_at||'').slice(0,10)}</span>
+      </div>`;
+    box.appendChild(card);
+  });
+}
+
+$('#f').addEventListener('submit', async e => {
+  e.preventDefault();
+  const q = $('#q').value.trim();
+  if (!q) return;
+  $('#status').textContent = '🔎 searching…';
+  $('#results').innerHTML = '';
+  try {
+    const data = await search(q, $('#lang').value, $('#sort').value, +$('#limit').value);
+    $('#status').textContent = `found ${fmt(data.total_count)} · showing ${Math.min(data.items.length, +$('#limit').value)}`;
+    render(data.items || []);
+  } catch (err) {
+    $('#status').textContent = '😾 ' + err.message + (/rate limit/i.test(err.message) ? ' — paste a token above' : '');
+  }
+});
+
+$('#q').focus();
+</script>
+
 </body>
 </html>
