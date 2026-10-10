@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>🐣 ghfind</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header><div class="wrap">
+<h1>🐣 ghfind</h1>
+<p class="tagline">a tiny cute github repo searcher — pure lua</p>
+<p class="badges">
+<span class="badge">pure lua</span>
+<span class="badge">no deps</span>
+<span class="badge">single file</span>
+<span class="badge">MIT</span>
+</p>
+<p class="cta">
+<a class="btn primary" href="https://github.com/USERNAME/ghfind">⭐ GitHub</a>
+<a class="btn" href="#install">📥 Install</a>
+</p>
+</div></header>
+
+<main class="wrap">
+<section>
+<h2>✨ demo</h2>
+<pre><code>$ lua ghfind.lua "neovim colorscheme" --sort stars
+
+  🔎  neovim colorscheme
+
+  1. folke/tokyonight.nvim   ⭐ 5.4k  🍴 341
+     A clean, dark Neovim theme.
+     Lua  2025-09-14
+     https://github.com/folke/tokyonight.nvim
+
+  2. catppuccin/nvim        ⭐ 5.1k  🍴 268
+     🍨 Soothing pastel theme.
+     Lua  2025-10-01
+     https://github.com/catppuccin/nvim
+
+  4.2k · 5</code></pre>
+</section>
+
+<section id="install">
+<h2>📥 install</h2>
+<pre><code>curl -O https://raw.githubusercontent.com/USERNAME/ghfind/main/ghfind.lua
+chmod +x ghfind.lua</code></pre>
+<pre><code># ubuntu/debian
+sudo apt install lua5.4 curl
+
+# macos
+brew install lua curl</code></pre>
+</section>
+
+<section>
+<h2>🚀 usage</h2>
+<pre><code>lua ghfind.lua "words" [opts]
+
+  -l/--lang X      language
+  -s/--sort X      stars|forks|updated
+  -n/--limit N     how many
+  -t/--check-token
+  -r/--recommend
+  -h/--help</code></pre>
+</section>
+
+<section>
+<h2>🔐 token</h2>
+<p>Optional. Raises rate limit. No scopes needed.</p>
+<pre><code>export GITHUB_TOKEN=ghp_xxx
+# or
+echo ghp_xxx &gt; ~/.config/ghfind/token
+chmod 600 ~/.config/ghfind/token</code></pre>
+<pre><code>lua ghfind.lua --check-token
+lua ghfind.lua --recommend</code></pre>
+</section>
+
+<section>
+<h2>💖 why</h2>
+<ul>
+<li>single file, zero deps</li>
+<li>cute emoji output</li>
+<li>built-in token scope audit</li>
+<li>ships its own json parser</li>
+</ul>
+</section>
+</main>
+
+<footer><div class="wrap">
+<p><a href="https://github.com/USERNAME/ghfind">github</a> · MIT · made with 🐣</p>
+</div></footer>
+</body>
+</html>
