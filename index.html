@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -8,7 +8,6 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐣</text></svg>">
 <meta property="og:title" content="🐣 ghfind">
 <meta property="og:description" content="a tiny cute github repo searcher — pure lua">
-<meta property="og:type" content="website">
 <meta property="og:url" content="https://7helix.github.io/ghfind/">
 <meta name="twitter:card" content="summary">
 <link rel="stylesheet" href="style.css">
@@ -16,8 +15,18 @@
 <body>
 
 <header><div class="wrap">
-  <h1>🐣 ghfind</h1>
-  <p class="tagline">a tiny cute github repo searcher — pure lua</p>
+  <div class="head-row">
+    <div>
+      <h1>🐣 ghfind</h1>
+      <p class="tagline">a tiny cute github repo searcher — pure lua</p>
+    </div>
+    <div class="head-actions">
+      <button class="icon-btn" id="theme" title="toggle theme">🌙</button>
+      <button class="icon-btn" id="favs" title="favorites">⭐ <span id="favc">0</span></button>
+      <button class="icon-btn" id="hist" title="history">🕒 <span id="histc">0</span></button>
+      <button class="icon-btn" id="help" title="shortcuts">?</button>
+    </div>
+  </div>
   <p class="badges">
     <span class="badge">pure lua</span>
     <span class="badge">no deps</span>
@@ -30,8 +39,10 @@
 
   <section class="finder">
     <div class="bar">
-      <input id="q" type="text" placeholder="search github repos…" autocomplete="off" spellcheck="false">
-      <button id="go" aria-label="search">🔎</button>
+      <span class="bar-icon">🔎</span>
+      <input id="q" type="text" placeholder="search github repos…  (press / to focus)" autocomplete="off" spellcheck="false">
+      <kbd class="bar-hint">/</kbd>
+      <button id="go">go</button>
     </div>
 
     <div class="filters">
@@ -55,6 +66,30 @@
       </div>
     </div>
 
+    <div class="row-3">
+      <div class="chips small" id="stars">
+        <span class="lbl">⭐</span>
+        <button class="chip on" data-v="">any</button>
+        <button class="chip" data-v="10">10+</button>
+        <button class="chip" data-v="100">100+</button>
+        <button class="chip" data-v="1000">1k+</button>
+        <button class="chip" data-v="10000">10k+</button>
+      </div>
+      <div class="chips small" id="age">
+        <span class="lbl">🕒</span>
+        <button class="chip on" data-v="">any</button>
+        <button class="chip" data-v="30">30d</button>
+        <button class="chip" data-v="180">6mo</button>
+        <button class="chip" data-v="365">1y</button>
+        <button class="chip" data-v="1095">3y</button>
+      </div>
+      <div class="chips small">
+        <button class="chip" id="random">🎲 random</button>
+        <button class="chip" id="trend">🔥 trending</button>
+        <button class="chip" id="view">▦ grid</button>
+      </div>
+    </div>
+
     <div class="suggest">
       <span class="lbl">try →</span>
       <button class="tag" data-q="neovim colorscheme">neovim colorscheme</button>
@@ -63,11 +98,27 @@
       <button class="tag" data-q="markdown parser">markdown parser</button>
       <button class="tag" data-q="terminal game">terminal game</button>
       <button class="tag" data-q="lua binding">lua binding</button>
+      <button class="tag" data-q="dotfiles">dotfiles</button>
+      <button class="tag" data-q="cli tool">cli tool</button>
     </div>
 
     <p id="status" class="status"></p>
-
+    <div class="stats-bar" id="stats-bar" hidden></div>
     <div id="grid" class="grid"></div>
+
+    <div class="more-wrap">
+      <button id="more" class="more" hidden>load more ↓</button>
+    </div>
+  </section>
+
+  <section class="presets">
+    <h2>⚡ saved searches</h2>
+    <div class="preset-row" id="preset-row"></div>
+    <div class="preset-add">
+      <input id="preset-name" placeholder="name" maxlength="20">
+      <input id="preset-q" placeholder="query" maxlength="80">
+      <button id="preset-save">+ save current</button>
+    </div>
   </section>
 
   <section class="install">
@@ -79,12 +130,33 @@ lua ghfind.lua "neovim colorscheme" --sort stars</code></pre>
 
 </main>
 
+<div class="drawer" id="drawer" hidden>
+  <div class="drawer-back" id="drawer-back"></div>
+  <div class="drawer-panel">
+    <div class="drawer-head">
+      <h3 id="drawer-title">favorites</h3>
+      <button class="icon-btn" id="drawer-close">✕</button>
+    </div>
+    <div class="drawer-body" id="drawer-body"></div>
+  </div>
+</div>
+
+<div class="modal" id="modal" hidden>
+  <div class="modal-back" id="modal-back"></div>
+  <div class="modal-panel">
+    <button class="icon-btn modal-close" id="modal-close">✕</button>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
 <footer><div class="wrap">
   <p><a href="https://github.com/7helix/ghfind">github</a> · MIT · made with 🐣</p>
 </div></footer>
 
 <script>
-const $  = s => document.querySelector(s);
+const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({
   '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
@@ -93,16 +165,52 @@ const fmt = n => n >= 1e6 ? (n/1e6).toFixed(1)+'M'
               : n >= 1e3 ? (n/1e3).toFixed(1)+'k'
               : String(n|0);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
+const ago = d => {
+  const s = (Date.now() - new Date(d)) / 1000;
+  if (s < 3600) return Math.floor(s/60)+'m';
+  if (s < 86400) return Math.floor(s/3600)+'h';
+  if (s < 2592000) return Math.floor(s/86400)+'d';
+  if (s < 31536000) return Math.floor(s/2592000)+'mo';
+  return Math.floor(s/31536000)+'y';
+};
 
-const state = { lang: '', sort: '', busy: false, demo: true, token: '' };
+const LANG_COLORS = {
+  'Lua':'#000080','Python':'#3572A5','Rust':'#dea584','Go':'#00ADD8',
+  'JavaScript':'#f1e05a','TypeScript':'#3178c6','C':'#555','C++':'#f34b7d',
+  'Zig':'#ec915c','Java':'#b07219','Ruby':'#701516','Haskell':'#5e5086',
+  'Shell':'#89e051','Vim script':'#199f4b','Nix':'#7e7eff'
+};
+const langColor = l => LANG_COLORS[l] || '#8be9fd';
 
-// ── token (sessionStorage only) ──
-state.token = sessionStorage.getItem('ghf_tok') || '';
+const LS = {
+  get(k, d) { try { return JSON.parse(localStorage.getItem('ghf_'+k)) ?? d } catch { return d } },
+  set(k, v) { try { localStorage.setItem('ghf_'+k, JSON.stringify(v)) } catch {} }
+};
 
-// ── github ──
-async function search(q) {
-  const p = new URLSearchParams({ q, per_page: 6 });
-  if (state.lang) p.set('q', q + ' language:' + state.lang);
+const state = {
+  lang: '', sort: '', stars: '', age: '',
+  page: 1, per: 12, total: 0, q: '',
+  busy: false, demo: true, view: LS.get('view', 'grid'),
+  token: sessionStorage.getItem('ghf_tok') || '',
+  favs: LS.get('favs', []),
+  hist: LS.get('hist', []),
+  results: []
+};
+
+const savedTheme = LS.get('theme', null);
+if (savedTheme) document.documentElement.dataset.theme = savedTheme;
+$('#theme').textContent = document.documentElement.dataset.theme === 'dark' ? '🌙' : '☀️';
+
+async function ghSearch(q, page = 1) {
+  let query = q;
+  if (state.lang) query += ' language:' + state.lang;
+  if (state.stars) query += ' stars:>=' + state.stars;
+  if (state.age) {
+    const d = new Date();
+    d.setDate(d.getDate() - +state.age);
+    query += ' pushed:>' + d.toISOString().slice(0,10);
+  }
+  const p = new URLSearchParams({ q: query, per_page: state.per, page });
   if (state.sort) { p.set('sort', state.sort); p.set('order', 'desc'); }
   const h = { Accept: 'application/vnd.github+json' };
   if (state.token) h.Authorization = 'Bearer ' + state.token;
@@ -112,51 +220,151 @@ async function search(q) {
   return j;
 }
 
-// ── render ──
+function pushHist(q) {
+  state.hist = [q, ...state.hist.filter(x => x !== q)].slice(0, 30);
+  LS.set('hist', state.hist);
+  $('#histc').textContent = state.hist.length;
+}
+
+function isFav(fn) { return state.favs.some(f => f.full_name === fn); }
+
+function toggleFav(r) {
+  const i = state.favs.findIndex(f => f.full_name === r.full_name);
+  if (i >= 0) state.favs.splice(i, 1);
+  else state.favs.unshift({
+    full_name: r.full_name, html_url: r.html_url,
+    description: r.description, stars: r.stargazers_count,
+    forks: r.forks_count, language: r.language,
+    owner: r.owner?.avatar_url
+  });
+  state.favs = state.favs.slice(0, 100);
+  LS.set('favs', state.favs);
+  $('#favc').textContent = state.favs.length;
+}
+
+let toastT;
+function toast(msg) {
+  const t = $('#toast');
+  t.textContent = msg;
+  t.classList.add('on');
+  clearTimeout(toastT);
+  toastT = setTimeout(() => t.classList.remove('on'), 1600);
+}
+
 function card(r, i) {
-  const c = document.createElement('a');
+  const c = document.createElement('article');
   c.className = 'card';
-  c.href = r.html_url;
-  c.target = '_blank';
-  c.rel = 'noopener';
-  c.style.animationDelay = (i * 40) + 'ms';
+  c.dataset.fn = r.full_name;
+  c.style.animationDelay = (i * 35) + 'ms';
+  const fav = isFav(r.full_name);
   c.innerHTML = `
     <div class="card-head">
       <img class="avatar" src="${esc(r.owner?.avatar_url || '')}" alt="" loading="lazy">
-      <span class="repo">${esc(r.full_name)}</span>
+      <a class="repo" href="${esc(r.html_url)}" target="_blank" rel="noopener">${esc(r.full_name)}</a>
+      <button class="fav ${fav?'on':''}" title="favorite">${fav?'★':'☆'}</button>
     </div>
     <p class="desc">${esc(r.description || '—')}</p>
+    ${r.topics && r.topics.length ? `<div class="topics">${r.topics.slice(0,4).map(t => `<span class="topic">${esc(t)}</span>`).join('')}</div>` : ''}
     <div class="card-foot">
       ${r.language ? `<span class="pill">${esc(r.language)}</span>` : ''}
       <span class="metric">⭐ ${fmt(r.stargazers_count)}</span>
       <span class="metric">🍴 ${fmt(r.forks_count)}</span>
-      <span class="metric dim">${(r.updated_at||'').slice(0,10)}</span>
+      <span class="metric dim">🕒 ${ago(r.updated_at)}</span>
+    </div>
+    <div class="card-actions">
+      <a class="act" href="${esc(r.html_url)}" target="_blank" rel="noopener">open</a>
+      <button class="act copy" data-u="${esc(r.html_url)}">copy</button>
+      <button class="act share" data-fn="${esc(r.full_name)}">share</button>
+      <button class="act details">details</button>
     </div>`;
+  c.querySelector('.fav').addEventListener('click', e => {
+    e.preventDefault();
+    toggleFav(r);
+    e.target.classList.toggle('on');
+    e.target.textContent = e.target.classList.contains('on') ? '★' : '☆';
+    toast(isFav(r.full_name) ? '★ saved' : 'removed');
+  });
+  c.querySelector('.copy').addEventListener('click', async e => {
+    e.preventDefault();
+    await navigator.clipboard.writeText(r.html_url);
+    toast('copied');
+  });
+  c.querySelector('.share').addEventListener('click', async e => {
+    e.preventDefault();
+    const u = location.origin + location.pathname + '?q=' + encodeURIComponent(state.q);
+    if (navigator.share) { try { await navigator.share({ title: r.full_name, url: u }) } catch {} }
+    else { await navigator.clipboard.writeText(u); toast('link copied'); }
+  });
+  c.querySelector('.details').addEventListener('click', e => {
+    e.preventDefault();
+    openRepoModal(r);
+  });
+  c.querySelector('.repo').addEventListener('click', e => {
+    e.preventDefault();
+    openRepoModal(r);
+  });
   return c;
 }
 
-function render(data) {
+function render(items, append = false) {
   const grid = $('#grid');
-  grid.innerHTML = '';
-  const items = data.items || [];
-  if (!items.length) {
+  if (!append) grid.innerHTML = '';
+  if (!items.length && !append) {
     grid.innerHTML = '<p class="empty">🫧 nothing found. try softer words?</p>';
+    $('#stats-bar').hidden = true;
     return;
   }
-  items.slice(0, 6).forEach((r, i) => grid.appendChild(card(r, i)));
+  items.forEach((r, i) => grid.appendChild(card(r, i)));
+  if (!append) showLangChart(items);
 }
 
-// ── run one search ──
-async function run(q) {
+function showLangChart(items) {
+  const bar = $('#stats-bar');
+  if (!items || items.length < 2) { bar.hidden = true; return; }
+  const counts = {};
+  items.forEach(r => {
+    const l = r.language || 'Other';
+    counts[l] = (counts[l] || 0) + 1;
+  });
+  const sorted = Object.entries(counts).sort((a,b) => b[1]-a[1]);
+  bar.innerHTML = '';
+  const label = document.createElement('span');
+  label.className = 'stat-pill';
+  label.innerHTML = '<b>languages</b>';
+  bar.appendChild(label);
+  sorted.forEach(([l, n]) => {
+    const el = document.createElement('span');
+    el.className = 'stat-pill';
+    el.innerHTML = `<span class="swatch" style="background:${langColor(l)}"></span>${esc(l)} <b>${n}</b>`;
+    el.addEventListener('click', () => {
+      setChip('#langs', l.toLowerCase());
+      state.lang = l.toLowerCase();
+      stopDemo();
+      if (state.q) run(state.q);
+    });
+    bar.appendChild(el);
+  });
+  bar.hidden = false;
+}
+
+async function run(q, page = 1) {
   if (state.busy || !q.trim()) return;
   state.busy = true;
+  state.q = q;
+  state.page = page;
   $('#status').textContent = '🔎 searching…';
   $('#status').classList.remove('err');
-  $('#grid').innerHTML = '';
   try {
-    const data = await search(q.trim());
-    $('#status').textContent = `${fmt(data.total_count)} repos · showing ${Math.min(data.items.length, 6)}`;
-    render(data);
+    const d = await ghSearch(q.trim(), page);
+    state.total = d.total_count || 0;
+    state.results = d.items || [];
+    $('#status').textContent = `${fmt(state.total)} repos · showing ${state.results.length}`;
+    render(state.results, page > 1);
+    $('#more').hidden = state.results.length < state.per || page * state.per >= Math.min(state.total, 1000);
+    if (page === 1) pushHist(q.trim());
+    const url = new URL(location);
+    url.searchParams.set('q', q.trim());
+    history.replaceState(null, '', url);
   } catch (e) {
     $('#status').textContent = '😾 ' + e.message;
     $('#status').classList.add('err');
@@ -165,24 +373,22 @@ async function run(q) {
   }
 }
 
-// ── typewriter ──
 async function typeInto(inp, text) {
   inp.value = '';
   for (const ch of text) {
     if (!state.demo) return;
     inp.value += ch;
-    await sleep(45 + Math.random() * 40);
+    await sleep(35 + Math.random() * 30);
   }
 }
 
-// ── auto-playing demo ──
 const DEMOS = [
-  { q: 'neovim colorscheme',  lang: '',        sort: 'stars' },
-  { q: 'tui file manager',    lang: '',        sort: 'stars' },
-  { q: 'http server',         lang: 'lua',     sort: 'stars' },
-  { q: 'markdown parser',     lang: 'rust',    sort: 'stars' },
-  { q: 'terminal game',       lang: 'c',       sort: 'stars' },
-  { q: 'web framework',       lang: 'zig',     sort: 'updated' }
+  { q: 'neovim colorscheme', lang: '', sort: 'stars' },
+  { q: 'tui file manager',   lang: '', sort: 'stars' },
+  { q: 'http server',        lang: 'lua', sort: 'stars' },
+  { q: 'markdown parser',    lang: 'rust', sort: 'stars' },
+  { q: 'terminal game',      lang: 'c', sort: 'stars' },
+  { q: 'web framework',      lang: 'zig', sort: 'updated' }
 ];
 
 async function demoLoop() {
@@ -190,18 +396,16 @@ async function demoLoop() {
   while (state.demo) {
     for (const d of DEMOS) {
       if (!state.demo) return;
-      // set filters
       setChip('#langs', d.lang);
       setChip('#sorts', d.sort);
       state.lang = d.lang;
       state.sort = d.sort;
-
       await typeInto($('#q'), d.q);
       if (!state.demo) return;
-      await sleep(250);
+      await sleep(220);
       await run(d.q);
       if (!state.demo) return;
-      await sleep(3200);
+      await sleep(3000);
     }
   }
 }
@@ -216,14 +420,295 @@ function setChip(sel, val) {
   $$(sel + ' .chip').forEach(c => c.classList.toggle('on', c.dataset.v === val));
 }
 
-// ── wire up ──
+function openDrawer(title, bodyFn) {
+  $('#drawer-title').textContent = title;
+  $('#drawer-body').innerHTML = '';
+  bodyFn($('#drawer-body'));
+  $('#drawer').hidden = false;
+  requestAnimationFrame(() => $('#drawer').classList.add('on'));
+}
+function closeDrawer() {
+  const d = $('#drawer');
+  d.classList.remove('on');
+  setTimeout(() => d.hidden = true, 200);
+}
+
+async function openRepoModal(r) {
+  const m = $('#modal');
+  const body = $('#modal-body');
+  body.innerHTML = `
+    <div class="m-head">
+      <img class="m-av" src="${esc(r.owner?.avatar_url||'')}" alt="">
+      <div style="flex:1;min-width:0">
+        <h3 class="m-title">${esc(r.full_name)}</h3>
+        <div class="m-owner">by ${esc(r.owner?.login||'')}</div>
+        <p class="m-desc">${esc(r.description||'—')}</p>
+      </div>
+    </div>
+    <div class="m-stats">
+      <div class="m-stat"><div class="v">${fmt(r.stargazers_count)}</div><div class="l">stars</div></div>
+      <div class="m-stat"><div class="v">${fmt(r.forks_count)}</div><div class="l">forks</div></div>
+      <div class="m-stat"><div class="v">${fmt(r.open_issues_count)}</div><div class="l">issues</div></div>
+      <div class="m-stat"><div class="v">${fmt(r.watchers_count)}</div><div class="l">watchers</div></div>
+      <div class="m-stat"><div class="v">${r.size ? (r.size>1024 ? Math.round(r.size/1024)+'MB' : r.size+'KB') : '—'}</div><div class="l">size</div></div>
+      <div class="m-stat"><div class="v">${r.license?.spdx_id || '—'}</div><div class="l">license</div></div>
+    </div>
+    ${r.topics && r.topics.length ? `<div class="m-topics">${r.topics.map(t => `<a class="m-topic" href="https://github.com/topics/${esc(t)}" target="_blank" rel="noopener">${esc(t)}</a>`).join('')}</div>` : ''}
+    <div id="m-readme" class="m-readme"><div class="m-loading">loading readme…</div></div>
+    <div class="m-actions">
+      <a class="m-btn primary" href="${esc(r.html_url)}" target="_blank" rel="noopener">open on github</a>
+      <button class="m-btn" id="m-fav">${isFav(r.full_name) ? '★ unfavorite' : '☆ favorite'}</button>
+      <button class="m-btn" id="m-copy">copy url</button>
+      <button class="m-btn" id="m-clone">copy clone cmd</button>
+      <a class="m-btn" href="${esc(r.html_url)}/issues" target="_blank" rel="noopener">issues</a>
+      <a class="m-btn" href="${esc(r.html_url)}/releases" target="_blank" rel="noopener">releases</a>
+    </div>`;
+  m.hidden = false;
+  requestAnimationFrame(() => m.classList.add('on'));
+
+  body.querySelector('#m-fav').addEventListener('click', () => {
+    toggleFav(r);
+    const on = isFav(r.full_name);
+    body.querySelector('#m-fav').textContent = on ? '★ unfavorite' : '☆ favorite';
+    toast(on ? '★ saved' : 'removed');
+  });
+  body.querySelector('#m-copy').addEventListener('click', async () => {
+    await navigator.clipboard.writeText(r.html_url); toast('url copied');
+  });
+  body.querySelector('#m-clone').addEventListener('click', async () => {
+    await navigator.clipboard.writeText('git clone ' + (r.clone_url || r.html_url + '.git'));
+    toast('clone cmd copied');
+  });
+
+  try {
+    const r2 = await fetch(`https://api.github.com/repos/${r.full_name}/readme`, {
+      headers: { Accept: 'application/vnd.github.raw' }
+    });
+    const txt = r2.ok ? await r2.text() : '';
+    const el = body.querySelector('#m-readme');
+    if (!txt) { el.innerHTML = '<div class="m-loading">no readme</div>'; return; }
+    el.innerHTML = '<pre>' + esc(txt.slice(0, 2000)) + (txt.length > 2000 ? '\n\n… (truncated)' : '') + '</pre>';
+  } catch {
+    body.querySelector('#m-readme').innerHTML = '<div class="m-loading">readme unavailable</div>';
+  }
+}
+
+function closeModal() {
+  const m = $('#modal');
+  m.classList.remove('on');
+  setTimeout(() => m.hidden = true, 200);
+}
+
+function getPresets() { return LS.get('presets', []) }
+function savePresets(p) { LS.set('presets', p); drawPresets() }
+
+function drawPresets() {
+  const row = $('#preset-row');
+  const list = getPresets();
+  row.innerHTML = '';
+  if (!list.length) {
+    row.innerHTML = '<span style="color:var(--muted);font-size:.82rem">no presets yet — set filters, then save</span>';
+    return;
+  }
+  list.forEach((p, i) => {
+    const el = document.createElement('button');
+    el.className = 'preset';
+    el.innerHTML = `${esc(p.name)}<span class="x" data-i="${i}">✕</span>`;
+    el.addEventListener('click', e => {
+      if (e.target.classList.contains('x')) {
+        e.stopPropagation();
+        const l = getPresets(); l.splice(i, 1); savePresets(l); return;
+      }
+      stopDemo();
+      $('#q').value = p.q || '';
+      state.lang = p.lang || ''; setChip('#langs', state.lang);
+      state.sort = p.sort || ''; setChip('#sorts', state.sort);
+      state.stars = p.stars || ''; setChip('#stars', state.stars);
+      state.age = p.age || ''; setChip('#age', state.age);
+      if (p.q) run(p.q);
+    });
+    row.appendChild(el);
+  });
+}
+
+$('#preset-save').addEventListener('click', () => {
+  const name = $('#preset-name').value.trim();
+  const q = $('#preset-q').value.trim() || state.q;
+  if (!name) return toast('name it first');
+  const list = getPresets().filter(x => x.name !== name);
+  list.push({ name, q, lang: state.lang, sort: state.sort, stars: state.stars, age: state.age });
+  savePresets(list);
+  $('#preset-name').value = '';
+  $('#preset-q').value = '';
+  toast('preset saved');
+});
+
+$('#favs').addEventListener('click', () => {
+  openDrawer('⭐ favorites (' + state.favs.length + ')', box => {
+    const tools = document.createElement('div');
+    tools.className = 'row-tools';
+    tools.innerHTML = `
+      <button id="exp">export json</button>
+      <button id="imp">import</button>
+      <button class="danger" id="clrf">clear all</button>`;
+    box.appendChild(tools);
+
+    tools.querySelector('#exp').addEventListener('click', () => {
+      const blob = new Blob([JSON.stringify(state.favs, null, 2)], { type:'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'ghfind-favorites.json';
+      a.click();
+    });
+    tools.querySelector('#imp').addEventListener('click', () => {
+      const inp = document.createElement('input');
+      inp.type = 'file'; inp.accept = '.json';
+      inp.addEventListener('change', async () => {
+        try {
+          const txt = await inp.files[0].text();
+          const arr = JSON.parse(txt);
+          if (!Array.isArray(arr)) throw 0;
+          const map = new Map();
+          [...state.favs, ...arr].forEach(f => map.set(f.full_name, f));
+          state.favs = [...map.values()].slice(0, 200);
+          LS.set('favs', state.favs);
+          $('#favc').textContent = state.favs.length;
+          closeDrawer();
+          toast('imported ' + arr.length);
+        } catch { toast('bad file'); }
+      });
+      inp.click();
+    });
+    tools.querySelector('#clrf').addEventListener('click', () => {
+      if (!confirm('clear all favorites?')) return;
+      state.favs = []; LS.set('favs', []); $('#favc').textContent = 0;
+      closeDrawer();
+    });
+
+    if (!state.favs.length) {
+      box.insertAdjacentHTML('beforeend', '<p class="empty">no favorites yet</p>');
+      return;
+    }
+
+    state.favs.forEach(f => {
+      const wrap = document.createElement('div');
+      wrap.className = 'row-item';
+      wrap.style.flexDirection = 'column';
+      wrap.style.alignItems = 'stretch';
+      wrap.innerHTML = `
+        <a href="${esc(f.html_url)}" target="_blank" rel="noopener" style="display:flex;gap:.7rem;align-items:center;text-decoration:none;color:inherit">
+          <img src="${esc(f.owner||'')}" alt="" class="av">
+          <div class="row-txt">
+            <div class="row-title">${esc(f.full_name)}</div>
+            <div class="row-sub">${esc(f.description||'')}</div>
+          </div>
+          <span class="row-met">⭐ ${fmt(f.stars)}</span>
+        </a>
+        <textarea class="fav-note" placeholder="note…" data-fn="${esc(f.full_name)}">${esc(f.note||'')}</textarea>
+        <div class="row-tools">
+          <button class="danger" data-rm="${esc(f.full_name)}">remove</button>
+        </div>`;
+      wrap.querySelector('.fav-note').addEventListener('input', e => {
+        const fn = e.target.dataset.fn;
+        const fav = state.favs.find(x => x.full_name === fn);
+        if (fav) { fav.note = e.target.value; LS.set('favs', state.favs); }
+      });
+      wrap.querySelector('[data-rm]').addEventListener('click', e => {
+        const fn = e.target.dataset.rm;
+        state.favs = state.favs.filter(x => x.full_name !== fn);
+        LS.set('favs', state.favs);
+        $('#favc').textContent = state.favs.length;
+        closeDrawer();
+      });
+      box.appendChild(wrap);
+    });
+  });
+});
+
+$('#hist').addEventListener('click', () => {
+  openDrawer('🕒 history', box => {
+    if (!state.hist.length) { box.innerHTML = '<p class="empty">no history</p>'; return; }
+    box.innerHTML = '<button class="act clear-all" id="clr-hist">clear all</button>';
+    box.querySelector('#clr-hist').addEventListener('click', () => {
+      state.hist = [];
+      LS.set('hist', []);
+      $('#histc').textContent = 0;
+      closeDrawer();
+    });
+    state.hist.forEach(h => {
+      const el = document.createElement('button');
+      el.className = 'row-item btn-row';
+      el.innerHTML = `<div class="row-txt"><div class="row-title">${esc(h)}</div></div>`;
+      el.addEventListener('click', () => { $('#q').value = h; closeDrawer(); stopDemo(); run(h); });
+      box.appendChild(el);
+    });
+  });
+});
+
+$('#help').addEventListener('click', () => {
+  openDrawer('⌨ shortcuts', box => {
+    box.innerHTML = `
+      <div class="row-item"><div class="row-txt"><div class="row-title">/</div><div class="row-sub">focus search</div></div></div>
+      <div class="row-item"><div class="row-txt"><div class="row-title">enter</div><div class="row-sub">search</div></div></div>
+      <div class="row-item"><div class="row-txt"><div class="row-title">esc</div><div class="row-sub">close / blur</div></div></div>
+      <div class="row-item"><div class="row-txt"><div class="row-title">r</div><div class="row-sub">random pick</div></div></div>
+      <div class="row-item"><div class="row-txt"><div class="row-title">?</div><div class="row-sub">this panel</div></div></div>`;
+  });
+});
+
+$('#drawer-close').addEventListener('click', closeDrawer);
+$('#drawer-back').addEventListener('click', closeDrawer);
+$('#modal-close').addEventListener('click', closeModal);
+$('#modal-back').addEventListener('click', closeModal);
+
 $('#go').addEventListener('click', () => { stopDemo(); run($('#q').value); });
 $('#q').addEventListener('keydown', e => {
   stopDemo();
   if (e.key === 'Enter') run($('#q').value);
+  if (e.key === 'Escape') { $('#q').value = ''; $('#q').blur(); }
 });
 $('#q').addEventListener('focus', stopDemo);
 $('#q').addEventListener('input', stopDemo);
+
+$('#more').addEventListener('click', () => {
+  state.page++;
+  run(state.q, state.page);
+});
+
+$('#random').addEventListener('click', async () => {
+  stopDemo();
+  const d = await ghSearch($('#q').value.trim() || 'lua');
+  const items = d.items || [];
+  if (!items.length) return toast('nothing');
+  const r = items[Math.floor(Math.random() * items.length)];
+  render([r]);
+  $('#status').textContent = '🎲 random pick';
+  $('#more').hidden = true;
+});
+
+$('#trend').addEventListener('click', () => {
+  stopDemo();
+  const d = new Date(); d.setDate(d.getDate() - 7);
+  $('#q').value = 'created:>' + d.toISOString().slice(0,10);
+  state.sort = 'stars';
+  setChip('#sorts', 'stars');
+  run($('#q').value);
+});
+
+$('#view').addEventListener('click', () => {
+  state.view = state.view === 'grid' ? 'list' : 'grid';
+  LS.set('view', state.view);
+  $('#grid').classList.toggle('list', state.view === 'list');
+  $('#view').textContent = state.view === 'grid' ? '▦ grid' : '☰ list';
+});
+
+$('#theme').addEventListener('click', () => {
+  const cur = document.documentElement.dataset.theme;
+  const next = cur === 'dark' ? 'light' : 'dark';
+  document.documentElement.dataset.theme = next;
+  LS.set('theme', next);
+  $('#theme').textContent = next === 'dark' ? '🌙' : '☀️';
+});
 
 $$('#langs .chip').forEach(c => c.addEventListener('click', () => {
   stopDemo();
@@ -239,14 +724,54 @@ $$('#sorts .chip').forEach(c => c.addEventListener('click', () => {
   if ($('#q').value.trim()) run($('#q').value);
 }));
 
+$$('#stars .chip').forEach(c => c.addEventListener('click', () => {
+  stopDemo();
+  state.stars = c.dataset.v;
+  setChip('#stars', c.dataset.v);
+  if ($('#q').value.trim()) run($('#q').value);
+}));
+
+$$('#age .chip').forEach(c => c.addEventListener('click', () => {
+  stopDemo();
+  state.age = c.dataset.v;
+  setChip('#age', c.dataset.v);
+  if ($('#q').value.trim()) run($('#q').value);
+}));
+
 $$('.tag').forEach(t => t.addEventListener('click', () => {
   stopDemo();
   $('#q').value = t.dataset.q;
   run(t.dataset.q);
 }));
 
-// ── boot ──
-demoLoop();
+document.addEventListener('keydown', e => {
+  const tag = document.activeElement.tagName;
+  if (tag === 'INPUT' || tag === 'TEXTAREA') {
+    if (e.key === 'Escape') document.activeElement.blur();
+    return;
+  }
+  if (e.key === '/') { e.preventDefault(); $('#q').focus(); }
+  if (e.key === 'Escape') { closeModal(); closeDrawer(); }
+  if (e.key === 'r') $('#random').click();
+  if (e.key === '?') $('#help').click();
+});
+
+$('#favc').textContent = state.favs.length;
+$('#histc').textContent = state.hist.length;
+$('#grid').classList.toggle('list', state.view === 'list');
+$('#view').textContent = state.view === 'grid' ? '▦ grid' : '☰ list';
+
+drawPresets();
+
+const params = new URLSearchParams(location.search);
+const qp = params.get('q');
+if (qp) {
+  state.demo = false;
+  $('#q').value = qp;
+  run(qp);
+} else {
+  demoLoop();
+}
 </script>
 
 </body>
