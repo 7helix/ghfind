@@ -231,4 +231,3 @@ MIT — see [LICENSE](LICENSE).
 Made with 🐣 and Lua
 
 </div>
-```
