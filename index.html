@@ -3,35 +3,31 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>◇ GHFIND — repo searcher</title>
+<title>◇ GHFIND</title>
 <meta name="description" content="GitHub repo searcher — pure Lua, single file.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐣</text></svg>">
 <meta property="og:title" content="◇ GHFIND">
-<meta property="og:description" content="github repo searcher — pure lua">
 <meta property="og:url" content="https://7helix.github.io/ghfind/">
-<meta name="twitter:card" content="summary">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Orbitron:wght@600;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Kanit:wght@700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <div class="bg-grid"></div>
-<div class="bg-glow"></div>
 
 <nav class="topbar">
-  <a class="nav-logo" href="#top">
-    <span class="diamond">◇</span>
-    <span>GHFIND</span>
+  <a class="nav-logo" href="#">
+    <span class="dia">◆</span> GHFIND
   </a>
   <div class="nav-links">
-    <a class="active" href="#top">HOME</a>
-    <a href="#search">SEARCH</a>
-    <a href="#" id="favs">FAVS<span class="badge" id="favc">0</span></a>
-    <a href="#" id="hist">HISTORY<span class="badge" id="histc">0</span></a>
-    <a href="#about">ABOUT</a>
-    <a class="cta" href="https://github.com/7helix/ghfind" target="_blank">◇ GITHUB</a>
+    <a class="active" href="#"><span class="dia-sm">◆</span> HOME</a>
+    <a href="#search"><span class="dia-sm">◆</span> SEARCH</a>
+    <a href="#" id="favs"><span class="dia-sm">◆</span> FAVS</a>
+    <a href="#" id="hist"><span class="dia-sm">◆</span> HISTORY</a>
+    <a href="#about"><span class="dia-sm">◆</span> ABOUT</a>
+    <a class="cta" href="https://github.com/7helix/ghfind" target="_blank"><span class="dia-sm">◆</span> GITHUB</a>
   </div>
 </nav>
 
@@ -44,18 +40,18 @@
 
     <h1 class="hero-title">GHFIND</h1>
 
-    <div class="hero-tag">github search · pure lua · zero deps · single file</div>
+    <div class="hero-tag">github search · pure lua · single file</div>
 
     <p class="hero-desc">
-      A tiny signal-tracking tool that scans GitHub's public network for
+      A tiny command-line tool that scans GitHub's public network for
       repositories matching your query. Reports stars, forks, language,
-      and last update. Runs offline in a single Lua file — no libraries,
-      no build step, no telemetry.
+      and last update. Runs in a single Lua file — no libraries, no build
+      step, no telemetry.
     </p>
 
     <div class="hero-actions">
-      <button class="btn-green" id="scroll-search">READ THE SOURCE</button>
-      <a class="btn-outline" href="https://github.com/7helix/ghfind" target="_blank">ENTER REPO</a>
+      <a class="btn-green" href="https://raw.githubusercontent.com/7helix/ghfind/main/ghfind.lua" target="_blank">READ THE SOURCE</a>
+      <button class="btn-outline" id="scroll-search">ENTER SEARCH</button>
     </div>
 
     <div class="info-boxes">
@@ -75,11 +71,15 @@
   </div>
 
   <div class="hero-right">
-    <div class="orbit orbit-1"></div>
-    <div class="orbit orbit-2"></div>
-    <div class="orbit orbit-3"></div>
-    <div class="diamond-frame">
-      <div class="chick">🐣</div>
+    <svg class="orbit" viewBox="0 0 500 500" aria-hidden="true">
+      <circle cx="250" cy="250" r="80" />
+      <circle cx="250" cy="250" r="160" stroke-dasharray="4 8" />
+      <circle cx="250" cy="250" r="230" stroke-dasharray="2 10" />
+      <polygon points="250,40 460,250 250,460 40,250" fill="none" />
+    </svg>
+    <div class="mascot">
+      <div class="mascot-glow"></div>
+      <div class="mascot-glyph">🐣</div>
     </div>
     <div class="hero-meta meta-l">
       <div>CL/NODE::03</div>
@@ -96,15 +96,15 @@
 
 <section class="search-section" id="search">
   <div class="section-head">
-    <span class="hash">◇</span>
+    <span class="dia">◆</span>
     <h2>SEARCH TERMINAL</h2>
     <span class="line"></span>
     <span class="dim">live</span>
   </div>
 
   <div class="bar">
-    <span class="prompt">&gt;</span>
-    <input id="q" type="text" placeholder="query repositories…   /  to focus" autocomplete="off" spellcheck="false">
+    <span class="prompt">›</span>
+    <input id="q" type="text" placeholder="query repositories…" autocomplete="off" spellcheck="false">
     <kbd>/</kbd>
     <button id="go">RUN</button>
   </div>
@@ -150,11 +150,11 @@
       <button class="chip" data-v="1095">3y</button>
     </div>
     <div class="chips right">
-      <button class="chip" id="random">⚄ random</button>
-      <button class="chip" id="trend">▴ trending</button>
-      <button class="chip" id="view">▦ grid</button>
-      <button class="chip" id="theme">◐ theme</button>
-      <button class="chip" id="help">? help</button>
+      <button class="chip" id="random">random</button>
+      <button class="chip" id="trend">trending</button>
+      <button class="chip" id="view">grid</button>
+      <button class="chip" id="theme">◐</button>
+      <button class="chip" id="help">?</button>
     </div>
   </div>
 
@@ -173,13 +173,13 @@
   <div id="grid" class="grid"></div>
 
   <div class="more-wrap">
-    <button id="more" class="more" hidden>▾ LOAD MORE</button>
+    <button id="more" class="more" hidden>LOAD MORE</button>
   </div>
 </section>
 
 <section class="presets" id="about">
   <div class="section-head">
-    <span class="hash">◇</span>
+    <span class="dia">◆</span>
     <h2>SAVED SIGNALS</h2>
     <span class="line"></span>
     <span class="dim">presets</span>
@@ -188,13 +188,13 @@
   <div class="preset-add">
     <input id="preset-name" placeholder="name" maxlength="20">
     <input id="preset-q" placeholder="query" maxlength="80">
-    <button id="preset-save">+ SAVE</button>
+    <button id="preset-save">SAVE</button>
   </div>
 </section>
 
 <section class="install">
   <div class="section-head">
-    <span class="hash">◇</span>
+    <span class="dia">◆</span>
     <h2>INSTALL THE CLI</h2>
     <span class="line"></span>
     <span class="dim">lua + curl</span>
@@ -247,12 +247,10 @@ const ago = d => {
   if (s < 31536000) return Math.floor(s/2592000)+'mo';
   return Math.floor(s/31536000)+'y';
 };
-
 const LANG_COLORS = {
   'Lua':'#00e5ff','Python':'#a8f04a','Rust':'#ff5c3d','Go':'#00d4ff',
   'JavaScript':'#f7df1e','TypeScript':'#00a8ff','C':'#7a7a7a','C++':'#ff2e97',
-  'Zig':'#ff9d00','Java':'#ff7a3d','Ruby':'#ff2e63','Haskell':'#b47aff',
-  'Shell':'#4ade80','Vim script':'#7dff4d','Nix':'#7dc4ff'
+  'Zig':'#ff9d00','Java':'#ff7a3d','Ruby':'#ff2e63','Haskell':'#b47aff'
 };
 const langColor = l => LANG_COLORS[l] || '#00e5ff';
 
@@ -267,8 +265,7 @@ const state = {
   busy: false, demo: true, view: LS.get('view', 'grid'),
   token: sessionStorage.getItem('ghf_tok') || '',
   favs: LS.get('favs', []),
-  hist: LS.get('hist', []),
-  results: []
+  hist: LS.get('hist', [])
 };
 
 const savedTheme = LS.get('theme', null);
@@ -296,7 +293,6 @@ async function ghSearch(q, page = 1) {
 function pushHist(q) {
   state.hist = [q, ...state.hist.filter(x => x !== q)].slice(0, 30);
   LS.set('hist', state.hist);
-  $('#histc').textContent = state.hist.length;
 }
 
 function isFav(fn) { return state.favs.some(f => f.full_name === fn); }
@@ -312,7 +308,6 @@ function toggleFav(r) {
   });
   state.favs = state.favs.slice(0, 100);
   LS.set('favs', state.favs);
-  $('#favc').textContent = state.favs.length;
 }
 
 let toastT;
@@ -327,12 +322,9 @@ function toast(msg) {
 function card(r, i) {
   const c = document.createElement('article');
   c.className = 'card';
-  c.dataset.fn = r.full_name;
   c.style.animationDelay = (i * 30) + 'ms';
   const fav = isFav(r.full_name);
   c.innerHTML = `
-    <span class="c tl"></span><span class="c tr"></span>
-    <span class="c bl"></span><span class="c br"></span>
     <div class="card-head">
       <img class="avatar" src="${esc(r.owner?.avatar_url || '')}" alt="" loading="lazy">
       <a class="repo" href="${esc(r.html_url)}" target="_blank" rel="noopener">${esc(r.full_name)}</a>
@@ -349,7 +341,6 @@ function card(r, i) {
     <div class="card-actions">
       <a class="act" href="${esc(r.html_url)}" target="_blank" rel="noopener">OPEN ↗</a>
       <button class="act copy">COPY</button>
-      <button class="act share">SHARE</button>
       <button class="act details">INFO</button>
     </div>`;
   c.querySelector('.fav').addEventListener('click', e => {
@@ -364,12 +355,6 @@ function card(r, i) {
     await navigator.clipboard.writeText(r.html_url);
     toast('copied');
   });
-  c.querySelector('.share').addEventListener('click', async e => {
-    e.preventDefault();
-    const u = location.origin + location.pathname + '?q=' + encodeURIComponent(state.q);
-    if (navigator.share) { try { await navigator.share({ title: r.full_name, url: u }) } catch {} }
-    else { await navigator.clipboard.writeText(u); toast('link copied'); }
-  });
   c.querySelector('.details').addEventListener('click', e => { e.preventDefault(); openRepoModal(r); });
   c.querySelector('.repo').addEventListener('click', e => { e.preventDefault(); openRepoModal(r); });
   return c;
@@ -379,7 +364,7 @@ function render(items, append = false) {
   const grid = $('#grid');
   if (!append) grid.innerHTML = '';
   if (!items.length && !append) {
-    grid.innerHTML = '<p class="empty">// no results. try softer words?</p>';
+    grid.innerHTML = '<p class="empty">// no results</p>';
     $('#stats-bar').hidden = true;
     return;
   }
@@ -422,21 +407,15 @@ async function run(q, page = 1) {
   state.q = q;
   state.page = page;
   $('#status').innerHTML = '<span class="dim">[ … ] scanning…</span>';
-  $('#status').classList.remove('err');
   try {
     const d = await ghSearch(q.trim(), page);
     state.total = d.total_count || 0;
-    state.results = d.items || [];
-    $('#status').innerHTML = `<span class="ok">[ ok ]</span> ${fmt(state.total)} repos <span class="dim">// showing ${state.results.length}</span>`;
-    render(state.results, page > 1);
-    $('#more').hidden = state.results.length < state.per || page * state.per >= Math.min(state.total, 1000);
+    $('#status').innerHTML = `<span class="ok">[ ok ]</span> ${fmt(state.total)} repos <span class="dim">// showing ${(d.items||[]).length}</span>`;
+    render(d.items || [], page > 1);
+    $('#more').hidden = (d.items||[]).length < state.per || page * state.per >= Math.min(state.total, 1000);
     if (page === 1) pushHist(q.trim());
-    const url = new URL(location);
-    url.searchParams.set('q', q.trim());
-    history.replaceState(null, '', url);
   } catch (e) {
     $('#status').innerHTML = '<span class="err-mark">[ err ]</span> ' + esc(e.message);
-    $('#status').classList.add('err');
   } finally {
     state.busy = false;
   }
@@ -447,7 +426,7 @@ async function typeInto(inp, text) {
   for (const ch of text) {
     if (!state.demo) return;
     inp.value += ch;
-    await sleep(35 + Math.random() * 30);
+    await sleep(40 + Math.random() * 30);
   }
 }
 
@@ -455,12 +434,11 @@ const DEMOS = [
   { q: 'neovim colorscheme', lang: '', sort: 'stars' },
   { q: 'tui file manager',   lang: '', sort: 'stars' },
   { q: 'http server',        lang: 'lua', sort: 'stars' },
-  { q: 'markdown parser',    lang: 'rust', sort: 'stars' },
-  { q: 'terminal game',      lang: 'c', sort: 'stars' }
+  { q: 'markdown parser',    lang: 'rust', sort: 'stars' }
 ];
 
 async function demoLoop() {
-  await sleep(900);
+  await sleep(1000);
   while (state.demo) {
     for (const d of DEMOS) {
       if (!state.demo) return;
@@ -473,7 +451,7 @@ async function demoLoop() {
       await sleep(220);
       await run(d.q);
       if (!state.demo) return;
-      await sleep(3200);
+      await sleep(3400);
     }
   }
 }
@@ -481,7 +459,6 @@ async function demoLoop() {
 function stopDemo() {
   if (!state.demo) return;
   state.demo = false;
-  document.body.classList.add('interactive');
 }
 
 function setChip(sel, val) {
@@ -518,7 +495,6 @@ async function openRepoModal(r) {
       <div class="m-stat"><div class="v">${fmt(r.forks_count)}</div><div class="l">⌥ forks</div></div>
       <div class="m-stat"><div class="v">${fmt(r.open_issues_count)}</div><div class="l">! issues</div></div>
       <div class="m-stat"><div class="v">${fmt(r.watchers_count)}</div><div class="l">◉ watch</div></div>
-      <div class="m-stat"><div class="v">${r.size ? (r.size>1024 ? Math.round(r.size/1024)+'MB' : r.size+'KB') : '—'}</div><div class="l">size</div></div>
       <div class="m-stat"><div class="v">${r.license?.spdx_id || '—'}</div><div class="l">license</div></div>
     </div>
     ${r.topics && r.topics.length ? `<div class="m-topics">${r.topics.map(t => `<a class="m-topic" href="https://github.com/topics/${esc(t)}" target="_blank" rel="noopener">#${esc(t)}</a>`).join('')}</div>` : ''}
@@ -528,8 +504,6 @@ async function openRepoModal(r) {
       <button class="m-btn" id="m-fav">${isFav(r.full_name) ? '★ UNFAV' : '☆ FAV'}</button>
       <button class="m-btn" id="m-copy">COPY URL</button>
       <button class="m-btn" id="m-clone">COPY CLONE</button>
-      <a class="m-btn" href="${esc(r.html_url)}/issues" target="_blank" rel="noopener">ISSUES</a>
-      <a class="m-btn" href="${esc(r.html_url)}/releases" target="_blank" rel="noopener">RELEASES</a>
     </div>`;
   m.hidden = false;
   requestAnimationFrame(() => m.classList.add('on'));
@@ -575,13 +549,13 @@ function drawPresets() {
   const list = getPresets();
   row.innerHTML = '';
   if (!list.length) {
-    row.innerHTML = '<span class="dim" style="font-size:.82rem">// no presets yet — set filters, then save</span>';
+    row.innerHTML = '<span class="dim" style="font-size:.82rem">// no presets yet</span>';
     return;
   }
   list.forEach((p, i) => {
     const el = document.createElement('button');
     el.className = 'preset';
-    el.innerHTML = `<span class="hash">◇</span>${esc(p.name)}<span class="x" data-i="${i}">✕</span>`;
+    el.innerHTML = `<span class="dia">◆</span>${esc(p.name)}<span class="x" data-i="${i}">✕</span>`;
     el.addEventListener('click', e => {
       if (e.target.classList.contains('x')) {
         e.stopPropagation();
@@ -608,85 +582,29 @@ $('#preset-save').addEventListener('click', () => {
   savePresets(list);
   $('#preset-name').value = '';
   $('#preset-q').value = '';
-  toast('preset saved');
+  toast('saved');
 });
 
 $('#favs').addEventListener('click', e => {
   e.preventDefault();
   openDrawer('★ favorites [' + state.favs.length + ']', box => {
-    const tools = document.createElement('div');
-    tools.className = 'row-tools';
-    tools.innerHTML = `<button id="exp">EXPORT</button><button id="imp">IMPORT</button><button class="danger" id="clrf">CLEAR</button>`;
-    box.appendChild(tools);
-
-    tools.querySelector('#exp').addEventListener('click', () => {
-      const blob = new Blob([JSON.stringify(state.favs, null, 2)], { type:'application/json' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'ghfind-favorites.json';
-      a.click();
-    });
-    tools.querySelector('#imp').addEventListener('click', () => {
-      const inp = document.createElement('input');
-      inp.type = 'file'; inp.accept = '.json';
-      inp.addEventListener('change', async () => {
-        try {
-          const txt = await inp.files[0].text();
-          const arr = JSON.parse(txt);
-          if (!Array.isArray(arr)) throw 0;
-          const map = new Map();
-          [...state.favs, ...arr].forEach(f => map.set(f.full_name, f));
-          state.favs = [...map.values()].slice(0, 200);
-          LS.set('favs', state.favs);
-          $('#favc').textContent = state.favs.length;
-          closeDrawer();
-          toast('imported ' + arr.length);
-        } catch { toast('bad file'); }
-      });
-      inp.click();
-    });
-    tools.querySelector('#clrf').addEventListener('click', () => {
-      if (!confirm('clear all favorites?')) return;
-      state.favs = []; LS.set('favs', []); $('#favc').textContent = 0;
-      closeDrawer();
-    });
-
     if (!state.favs.length) {
-      box.insertAdjacentHTML('beforeend', '<p class="empty">// no favorites yet</p>');
+      box.innerHTML = '<p class="empty">// no favorites yet</p>';
       return;
     }
-
     state.favs.forEach(f => {
-      const wrap = document.createElement('div');
-      wrap.className = 'row-item';
-      wrap.style.flexDirection = 'column';
-      wrap.style.alignItems = 'stretch';
-      wrap.innerHTML = `
-        <a href="${esc(f.html_url)}" target="_blank" rel="noopener" style="display:flex;gap:.7rem;align-items:center;text-decoration:none;color:inherit">
-          <img src="${esc(f.owner||'')}" alt="" class="av">
-          <div class="row-txt">
-            <div class="row-title">${esc(f.full_name)}</div>
-            <div class="row-sub">${esc(f.description||'')}</div>
-          </div>
-          <span class="row-met">★ ${fmt(f.stars)}</span>
-        </a>
-        <textarea class="fav-note" placeholder="// note…" data-fn="${esc(f.full_name)}">${esc(f.note||'')}</textarea>
-        <div class="row-tools">
-          <button class="danger" data-rm="${esc(f.full_name)}">REMOVE</button>
-        </div>`;
-      wrap.querySelector('.fav-note').addEventListener('input', e => {
-        const fn = e.target.dataset.fn;
-        const fav = state.favs.find(x => x.full_name === fn);
-        if (fav) { fav.note = e.target.value; LS.set('favs', state.favs); }
-      });
-      wrap.querySelector('[data-rm]').addEventListener('click', e => {
-        const fn = e.target.dataset.rm;
-        state.favs = state.favs.filter(x => x.full_name !== fn);
-        LS.set('favs', state.favs);
-        $('#favc').textContent = state.favs.length;
-        closeDrawer();
-      });
-      box.appendChild(wrap);
+      const el = document.createElement('a');
+      el.className = 'row-item';
+      el.href = f.html_url;
+      el.target = '_blank';
+      el.innerHTML = `
+        <img src="${esc(f.owner||'')}" alt="" class="av">
+        <div class="row-txt">
+          <div class="row-title">${esc(f.full_name)}</div>
+          <div class="row-sub">${esc(f.description||'')}</div>
+        </div>
+        <span class="row-met">★ ${fmt(f.stars)}</span>`;
+      box.appendChild(el);
     });
   });
 });
@@ -694,18 +612,11 @@ $('#favs').addEventListener('click', e => {
 $('#hist').addEventListener('click', e => {
   e.preventDefault();
   openDrawer('▤ history', box => {
-    if (!state.hist.length) { box.innerHTML = '<p class="empty">// no history</p>'; return; }
-    box.innerHTML = '<button class="act clear-all" id="clr-hist">CLEAR ALL</button>';
-    box.querySelector('#clr-hist').addEventListener('click', () => {
-      state.hist = [];
-      LS.set('hist', []);
-      $('#histc').textContent = 0;
-      closeDrawer();
-    });
+    if (!state.hist.length) { box.innerHTML = '<p class="empty">// empty</p>'; return; }
     state.hist.forEach(h => {
       const el = document.createElement('button');
       el.className = 'row-item btn-row';
-      el.innerHTML = `<div class="row-txt"><div class="row-title"><span class="hash">&gt;</span> ${esc(h)}</div></div>`;
+      el.innerHTML = `<div class="row-txt"><div class="row-title"><span class="dia">◆</span> ${esc(h)}</div></div>`;
       el.addEventListener('click', () => { $('#q').value = h; closeDrawer(); stopDemo(); run(h); });
       box.appendChild(el);
     });
@@ -717,9 +628,8 @@ $('#help').addEventListener('click', () => {
     box.innerHTML = `
       <div class="row-item"><div class="row-txt"><div class="row-title">/</div><div class="row-sub">focus search</div></div></div>
       <div class="row-item"><div class="row-txt"><div class="row-title">enter</div><div class="row-sub">search</div></div></div>
-      <div class="row-item"><div class="row-txt"><div class="row-title">esc</div><div class="row-sub">close / blur</div></div></div>
-      <div class="row-item"><div class="row-txt"><div class="row-title">r</div><div class="row-sub">random pick</div></div></div>
-      <div class="row-item"><div class="row-txt"><div class="row-title">?</div><div class="row-sub">this panel</div></div></div>`;
+      <div class="row-item"><div class="row-txt"><div class="row-title">esc</div><div class="row-sub">close</div></div></div>
+      <div class="row-item"><div class="row-txt"><div class="row-title">r</div><div class="row-sub">random</div></div></div>`;
   });
 });
 
@@ -750,7 +660,7 @@ $('#random').addEventListener('click', async () => {
   if (!items.length) return toast('nothing');
   const r = items[Math.floor(Math.random() * items.length)];
   render([r]);
-  $('#status').innerHTML = '<span class="ok">[ ok ]</span> ⚄ random pick';
+  $('#status').innerHTML = '<span class="ok">[ ok ]</span> random pick';
   $('#more').hidden = true;
 });
 
@@ -767,7 +677,6 @@ $('#view').addEventListener('click', () => {
   state.view = state.view === 'grid' ? 'list' : 'grid';
   LS.set('view', state.view);
   $('#grid').classList.toggle('list', state.view === 'list');
-  $('#view').textContent = state.view === 'grid' ? '▦ grid' : '☰ list';
 });
 
 $('#theme').addEventListener('click', () => {
@@ -816,10 +725,8 @@ document.addEventListener('keydown', e => {
   if (e.key === '/') { e.preventDefault(); $('#q').focus(); }
   if (e.key === 'Escape') { closeModal(); closeDrawer(); }
   if (e.key === 'r') $('#random').click();
-  if (e.key === '?') $('#help').click();
 });
 
-// ── UTC clock ──
 function tickUTC() {
   const d = new Date();
   const p = n => String(n).padStart(2, '0');
@@ -828,17 +735,10 @@ function tickUTC() {
 tickUTC();
 setInterval(tickUTC, 1000);
 
-// ── ticker ──
 const TICK = ['NETWORK CULTURE','GAME PRESERVATION','PLATFORM RESPONSE','GHFIND','PUBLIC SIGNAL','PURE LUA','ZERO DEPS','SINGLE FILE','OPEN SOURCE'];
 const tk = $('#ticker');
-const one = TICK.map(t => `<span class="tick"><span class="diamond">◇</span> ${t}</span>`).join('');
+const one = TICK.map(t => `<span class="tick"><span class="dia">◆</span> ${t}</span>`).join('');
 tk.innerHTML = one + one;
-
-// ── init ──
-$('#favc').textContent = state.favs.length;
-$('#histc').textContent = state.hist.length;
-$('#grid').classList.toggle('list', state.view === 'list');
-$('#view').textContent = state.view === 'grid' ? '▦ grid' : '☰ list';
 
 drawPresets();
 
