@@ -24,59 +24,57 @@
     <span class="badge">single file</span>
     <span class="badge">MIT</span>
   </p>
-  <p class="cta">
-    <a class="btn primary" href="https://github.com/7helix/ghfind">⭐ GitHub</a>
-    <a class="btn" href="#playground">🎮 Try it</a>
-  </p>
 </div></header>
 
 <main class="wrap">
 
-  <section id="playground">
-    <h2>🎮 try it live</h2>
-    <div class="term" id="term">
-      <div class="term-bar">
-        <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
-        <span class="term-title">ghfind — bash</span>
+  <section class="finder">
+    <div class="bar">
+      <input id="q" type="text" placeholder="search github repos…" autocomplete="off" spellcheck="false">
+      <button id="go" aria-label="search">🔎</button>
+    </div>
+
+    <div class="filters">
+      <div class="chips" id="langs">
+        <button class="chip on" data-v="">any</button>
+        <button class="chip" data-v="lua">lua</button>
+        <button class="chip" data-v="python">python</button>
+        <button class="chip" data-v="rust">rust</button>
+        <button class="chip" data-v="go">go</button>
+        <button class="chip" data-v="javascript">js</button>
+        <button class="chip" data-v="typescript">ts</button>
+        <button class="chip" data-v="c">c</button>
+        <button class="chip" data-v="c++">c++</button>
+        <button class="chip" data-v="zig">zig</button>
       </div>
-      <div class="term-body" id="term-body"></div>
+      <div class="chips right" id="sorts">
+        <button class="chip on" data-v="">best</button>
+        <button class="chip" data-v="stars">⭐ stars</button>
+        <button class="chip" data-v="forks">🍴 forks</button>
+        <button class="chip" data-v="updated">🕒 fresh</button>
+      </div>
     </div>
-    <div class="quick">
-      <span>try:</span>
-      <button class="chip" data-cmd='ghfind "neovim colorscheme" --sort stars'>neovim colorscheme</button>
-      <button class="chip" data-cmd='ghfind "http server" --lang lua'>lua http server</button>
-      <button class="chip" data-cmd='ghfind "tui file manager" -n 3'>tui file manager</button>
-      <button class="chip" data-cmd='ghfind --recommend'>--recommend</button>
-      <button class="chip" data-cmd='ghfind --check-token'>--check-token</button>
-      <button class="chip" data-cmd='help'>help</button>
+
+    <div class="suggest">
+      <span class="lbl">try →</span>
+      <button class="tag" data-q="neovim colorscheme">neovim colorscheme</button>
+      <button class="tag" data-q="tui file manager">tui file manager</button>
+      <button class="tag" data-q="http server">http server</button>
+      <button class="tag" data-q="markdown parser">markdown parser</button>
+      <button class="tag" data-q="terminal game">terminal game</button>
+      <button class="tag" data-q="lua binding">lua binding</button>
     </div>
+
+    <p id="status" class="status"></p>
+
+    <div id="grid" class="grid"></div>
   </section>
 
-  <section id="install">
-    <h2>📥 install the CLI</h2>
+  <section class="install">
+    <h2>📥 install the cli</h2>
     <pre><code>curl -O https://raw.githubusercontent.com/7helix/ghfind/main/ghfind.lua
 chmod +x ghfind.lua
 lua ghfind.lua "neovim colorscheme" --sort stars</code></pre>
-  </section>
-
-  <section>
-    <h2>🚀 usage</h2>
-    <pre><code>lua ghfind.lua "words" [opts]
-
-  -l/--lang X      language
-  -s/--sort X      stars|forks|updated
-  -n/--limit N     how many
-  -t/--check-token
-  -r/--recommend
-  -h/--help</code></pre>
-  </section>
-
-  <section>
-    <h2>🔐 token</h2>
-    <pre><code>export GITHUB_TOKEN=ghp_xxx
-# or
-echo ghp_xxx &gt; ~/.config/ghfind/token
-chmod 600 ~/.config/ghfind/token</code></pre>
   </section>
 
 </main>
@@ -86,268 +84,169 @@ chmod 600 ~/.config/ghfind/token</code></pre>
 </div></footer>
 
 <script>
-const $ = s => document.querySelector(s);
-const body = $('#term-body');
+const $  = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({
   '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
 }[c]));
 const fmt = n => n >= 1e6 ? (n/1e6).toFixed(1)+'M'
               : n >= 1e3 ? (n/1e3).toFixed(1)+'k'
               : String(n|0);
+const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-function line(html, cls) {
-  const d = document.createElement('div');
-  d.className = 't-line' + (cls ? ' ' + cls : '');
-  d.innerHTML = html;
-  body.appendChild(d);
-  body.scrollTop = body.scrollHeight;
-  return d;
-}
-function out(s)   { line(esc(s)); }
-function ok(s)    { line('<span class="c-ok">'   + esc(s) + '</span>'); }
-function warn(s)  { line('<span class="c-warn">' + esc(s) + '</span>'); }
-function err(s)   { line('<span class="c-err">'  + esc(s) + '</span>'); }
-function dim(s)   { line('<span class="c-dim">'  + esc(s) + '</span>'); }
-function cyan(s)  { line('<span class="c-cy">'   + esc(s) + '</span>'); }
+const state = { lang: '', sort: '', busy: false, demo: true, token: '' };
 
-function getToken() { return sessionStorage.getItem('ghf_tok') || ''; }
+// ── token (sessionStorage only) ──
+state.token = sessionStorage.getItem('ghf_tok') || '';
 
-async function ghSearch(q, lang, sort, limit) {
-  const params = new URLSearchParams({ q, per_page: limit });
-  if (lang) params.set('q', q + ' language:' + lang);
-  if (sort) { params.set('sort', sort); params.set('order', 'desc'); }
-  const headers = { Accept: 'application/vnd.github+json' };
-  const tk = getToken();
-  if (tk) headers.Authorization = 'Bearer ' + tk;
-  const r = await fetch('https://api.github.com/search/repositories?' + params, { headers });
+// ── github ──
+async function search(q) {
+  const p = new URLSearchParams({ q, per_page: 6 });
+  if (state.lang) p.set('q', q + ' language:' + state.lang);
+  if (state.sort) { p.set('sort', state.sort); p.set('order', 'desc'); }
+  const h = { Accept: 'application/vnd.github+json' };
+  if (state.token) h.Authorization = 'Bearer ' + state.token;
+  const r = await fetch('https://api.github.com/search/repositories?' + p, { headers: h });
   const j = await r.json();
   if (!r.ok) throw new Error(j.message || ('HTTP ' + r.status));
   return j;
 }
 
-async function cmdSearch(args) {
-  const words = [];
-  let lang = '', sort = '', limit = 5, i = 0;
-  while (i < args.length) {
-    const a = args[i];
-    if (a === '-l' || a === '--lang')  { lang = args[++i] || ''; }
-    else if (a === '-s' || a === '--sort')  { sort = args[++i] || ''; }
-    else if (a === '-n' || a === '--limit') { limit = parseInt(args[++i]) || 5; }
-    else words.push(a);
-    i++;
+// ── render ──
+function card(r, i) {
+  const c = document.createElement('a');
+  c.className = 'card';
+  c.href = r.html_url;
+  c.target = '_blank';
+  c.rel = 'noopener';
+  c.style.animationDelay = (i * 40) + 'ms';
+  c.innerHTML = `
+    <div class="card-head">
+      <img class="avatar" src="${esc(r.owner?.avatar_url || '')}" alt="" loading="lazy">
+      <span class="repo">${esc(r.full_name)}</span>
+    </div>
+    <p class="desc">${esc(r.description || '—')}</p>
+    <div class="card-foot">
+      ${r.language ? `<span class="pill">${esc(r.language)}</span>` : ''}
+      <span class="metric">⭐ ${fmt(r.stargazers_count)}</span>
+      <span class="metric">🍴 ${fmt(r.forks_count)}</span>
+      <span class="metric dim">${(r.updated_at||'').slice(0,10)}</span>
+    </div>`;
+  return c;
+}
+
+function render(data) {
+  const grid = $('#grid');
+  grid.innerHTML = '';
+  const items = data.items || [];
+  if (!items.length) {
+    grid.innerHTML = '<p class="empty">🫧 nothing found. try softer words?</p>';
+    return;
   }
-  const q = words.join(' ').replace(/^["']|["']$/g, '');
-  if (!q) { err('usage: ghfind "words" [opts]'); return; }
-  cyan('🔎 ' + q);
-  out('');
+  items.slice(0, 6).forEach((r, i) => grid.appendChild(card(r, i)));
+}
+
+// ── run one search ──
+async function run(q) {
+  if (state.busy || !q.trim()) return;
+  state.busy = true;
+  $('#status').textContent = '🔎 searching…';
+  $('#status').classList.remove('err');
+  $('#grid').innerHTML = '';
   try {
-    const data = await ghSearch(q, lang, sort, limit);
-    const items = data.items || [];
-    if (!items.length) { dim('🫧 nothing found.'); out(''); return; }
-    items.slice(0, limit).forEach((r, i) => {
-      const num = `<span class="c-mg">${i+1}.</span>`;
-      const name = `<span class="c-cy">${esc(r.full_name)}</span>`;
-      const stars = `<span class="c-ye">⭐ ${fmt(r.stargazers_count)}</span>`;
-      const forks = `<span class="c-ye">🍴 ${fmt(r.forks_count)}</span>`;
-      line(`  ${num} ${name}   ${stars}  ${forks}`);
-      wrap(r.description || '—', 66).forEach(w =>
-        line('     <span class="c-dim">' + esc(w) + '</span>'));
-      line(`     <span class="c-dim">${esc(r.language || '—')}  ${(r.updated_at||'').slice(0,10)}</span>`);
-      line(`     <a class="c-link" href="${esc(r.html_url)}" target="_blank" rel="noopener">${esc(r.html_url)}</a>`);
-      out('');
-    });
-    dim(`found ${fmt(data.total_count)} · showing ${Math.min(items.length, limit)}`);
-    out('');
+    const data = await search(q.trim());
+    $('#status').textContent = `${fmt(data.total_count)} repos · showing ${Math.min(data.items.length, 6)}`;
+    render(data);
   } catch (e) {
-    err('😾 ' + e.message);
-    if (/rate limit/i.test(e.message)) dim('      tip: run `token ghp_xxx`');
-    out('');
+    $('#status').textContent = '😾 ' + e.message;
+    $('#status').classList.add('err');
+  } finally {
+    state.busy = false;
   }
 }
 
-function wrap(s, n) {
-  const words = String(s).split(/\s+/);
-  const lines = []; let cur = '';
-  for (const w of words) {
-    if ((cur + ' ' + w).trim().length > n) { lines.push(cur.trim()); cur = w; }
-    else cur = (cur ? cur + ' ' : '') + w;
+// ── typewriter ──
+async function typeInto(inp, text) {
+  inp.value = '';
+  for (const ch of text) {
+    if (!state.demo) return;
+    inp.value += ch;
+    await sleep(45 + Math.random() * 40);
   }
-  if (cur) lines.push(cur.trim());
-  return lines;
 }
 
-function cmdRecommend() {
-  out('');
-  cyan('  🐣  recommended scopes');
-  out('');
-  line('  <span class="c-ok">✅ minimum:</span>  none');
-  line('  <span class="c-cy">🟢 ok:</span>  public_repo');
-  out('');
-  line('  <span class="c-err">🚨 avoid:</span>');
-  ['repo','user','security_events','delete_repo',
-   'admin:org','workflow','admin:public_key','delete:packages'].forEach(s =>
-    line(`     <span class="c-err">${s}</span>`));
-  out('');
-  dim('  https://github.com/settings/tokens');
-  out('');
-}
+// ── auto-playing demo ──
+const DEMOS = [
+  { q: 'neovim colorscheme',  lang: '',        sort: 'stars' },
+  { q: 'tui file manager',    lang: '',        sort: 'stars' },
+  { q: 'http server',         lang: 'lua',     sort: 'stars' },
+  { q: 'markdown parser',     lang: 'rust',    sort: 'stars' },
+  { q: 'terminal game',       lang: 'c',       sort: 'stars' },
+  { q: 'web framework',       lang: 'zig',     sort: 'updated' }
+];
 
-async function cmdCheck() {
-  const tk = getToken();
-  if (!tk) { warn('  🐾  no token set'); dim('  run: token ghp_xxx'); out(''); return; }
-  cyan('  🔐  checking...');
-  out('');
-  try {
-    const r = await fetch('https://api.github.com/user', {
-      headers: { Authorization: 'Bearer ' + tk, Accept: 'application/vnd.github+json' }
-    });
-    if (r.status === 401) { err('  🚨  invalid token'); out(''); return; }
-    const scopesHeader = r.headers.get('x-oauth-scopes') || '';
-    const scopes = scopesHeader.split(/,\s*/).filter(Boolean);
-    if (!scopes.length) { ok('  scopes: none'); ok('  ✅  perfect'); out(''); return; }
-    const lvl = {
-      ok:['✅','c-ok'], mild:['🟢','c-cy'], spicy:['🟠','c-warn'], dangerous:['🚨','c-err']
-    };
-    const tbl = {
-      'public_repo':'ok',
-      'repo:status':'mild','repo_deployment':'mild','repo:invite':'mild','read:user':'mild',
-      'user:email':'spicy','user:follow':'spicy','notifications':'spicy',
-      'read:project':'spicy','gist':'spicy','write:packages':'spicy',
-      'repo':'dangerous','user':'dangerous','project':'dangerous',
-      'security_events':'dangerous','delete_repo':'dangerous','admin:org':'dangerous',
-      'admin:public_key':'dangerous','admin:repo_hook':'dangerous',
-      'delete:packages':'dangerous','workflow':'dangerous',
-    };
-    const counts = { ok:0, mild:0, spicy:0, dangerous:0 };
-    scopes.forEach(s => {
-      const l = tbl[s] || 'spicy'; counts[l]++;
-      const [icon, cls] = lvl[l];
-      line(`  ${icon} <span class="${cls}">${esc(s)}</span>`);
-    });
-    out('');
-    dim(`  ${counts.ok} ok  ${counts.mild} mild  ${counts.spicy} spicy  ${counts.dangerous} danger`);
-    out('');
-    if (counts.dangerous) err('  🚨  overkill — regenerate with zero scopes');
-    else if (counts.spicy) warn('  🟠  more than needed');
-    else ok('  ✅  clean');
-    out('');
-  } catch (e) { err('  😿  ' + e.message); out(''); }
-}
+async function demoLoop() {
+  await sleep(700);
+  while (state.demo) {
+    for (const d of DEMOS) {
+      if (!state.demo) return;
+      // set filters
+      setChip('#langs', d.lang);
+      setChip('#sorts', d.sort);
+      state.lang = d.lang;
+      state.sort = d.sort;
 
-function cmdToken(args) {
-  const v = args.join(' ').trim();
-  if (!v) {
-    const cur = getToken();
-    if (cur) dim('  token set: ' + cur.slice(0, 8) + '…');
-    else     dim('  no token set');
-    out(''); return;
-  }
-  if (v === 'clear' || v === 'off') {
-    sessionStorage.removeItem('ghf_tok');
-    ok('  token cleared'); out(''); return;
-  }
-  sessionStorage.setItem('ghf_tok', v);
-  ok('  token saved (this tab only)'); out('');
-}
-
-function cmdHelp() {
-  out('');
-  cyan('  ghfind 🐣  — commands');
-  out('');
-  line('  <span class="c-cy">ghfind "words"</span>            search github');
-  line('  <span class="c-cy">ghfind "words" -l lua</span>     filter by language');
-  line('  <span class="c-cy">ghfind "words" -s stars</span>    sort: stars|forks|updated');
-  line('  <span class="c-cy">ghfind "words" -n 10</span>        how many results');
-  line('  <span class="c-cy">ghfind --recommend</span>           safe token scopes');
-  line('  <span class="c-cy">ghfind --check-token</span>         inspect token');
-  out('');
-  line('  <span class="c-cy">token ghp_xxx</span>                set token (this tab only)');
-  line('  <span class="c-cy">token clear</span>                  forget token');
-  line('  <span class="c-cy">clear</span>                        clear screen');
-  line('  <span class="c-cy">help</span>                         this');
-  out('');
-}
-
-function toks(s) {
-  const out = []; let cur = ''; let q = null;
-  for (const c of s) {
-    if (q) { if (c === q) q = null; else cur += c; }
-    else if (c === '"' || c === "'") q = c;
-    else if (/\s/.test(c)) { if (cur) { out.push(cur); cur = ''; } }
-    else cur += c;
-  }
-  if (cur) out.push(cur);
-  return out;
-}
-
-async function run(raw) {
-  const t = raw.trim(); if (!t) return;
-  const parts = toks(t);
-  const cmd = parts[0], rest = parts.slice(1);
-  if (cmd === 'help' || cmd === '--help' || cmd === '-h') return cmdHelp();
-  if (cmd === 'clear') { body.innerHTML = ''; return; }
-  if (cmd === 'token') return cmdToken(rest);
-  if (cmd === 'ghfind') {
-    if (rest.includes('--recommend') || rest.includes('-r')) return cmdRecommend();
-    if (rest.includes('--check-token') || rest.includes('-t')) return cmdCheck();
-    if (rest.includes('--help') || rest.includes('-h')) return cmdHelp();
-    return cmdSearch(rest);
-  }
-  err('command not found: ' + cmd + ' — try `help`');
-  out('');
-}
-
-function showPrompt() {
-  const prompt = document.createElement('div');
-  prompt.className = 't-line t-prompt';
-  prompt.innerHTML = '<span class="c-ok">ghfind</span><span class="c-dim"> ~ $ </span>';
-  const inp = document.createElement('input');
-  inp.type = 'text';
-  inp.className = 't-in';
-  inp.spellcheck = false;
-  inp.autocapitalize = 'off';
-  inp.autocomplete = 'off';
-  prompt.appendChild(inp);
-  body.appendChild(prompt);
-  body.scrollTop = body.scrollHeight;
-  inp.focus();
-
-  let hist = [], hi = -1;
-  inp.addEventListener('keydown', async e => {
-    if (e.key === 'Enter') {
-      const v = inp.value;
-      if (v.trim()) hist.push(v);
-      hi = hist.length;
-      inp.disabled = true; inp.classList.add('done');
-      const cm = document.createElement('span');
-      cm.className = 't-cmd'; cm.textContent = v;
-      prompt.insertBefore(cm, inp);
-      inp.remove();
-      out('');
-      await run(v);
-      showPrompt();
-    } else if (e.key === 'ArrowUp') {
-      if (hi > 0) { hi--; inp.value = hist[hi]; e.preventDefault(); }
-    } else if (e.key === 'ArrowDown') {
-      if (hi < hist.length - 1) { hi++; inp.value = hist[hi]; }
-      else { hi = hist.length; inp.value = ''; }
-    } else if (e.key === 'l' && e.ctrlKey) {
-      e.preventDefault(); body.innerHTML = ''; showPrompt();
+      await typeInto($('#q'), d.q);
+      if (!state.demo) return;
+      await sleep(250);
+      await run(d.q);
+      if (!state.demo) return;
+      await sleep(3200);
     }
-  });
+  }
 }
 
-document.querySelectorAll('.chip').forEach(c => {
-  c.addEventListener('click', () => {
-    const inp = document.querySelector('.t-in');
-    if (inp) { inp.value = c.dataset.cmd; inp.focus(); }
-  });
-});
+function stopDemo() {
+  if (!state.demo) return;
+  state.demo = false;
+  document.body.classList.add('interactive');
+}
 
-line('<span class="c-dim">ghfind 🐣  — browser edition</span>');
-line('<span class="c-dim">type `help` or click a chip below.</span>');
-out('');
-showPrompt();
+function setChip(sel, val) {
+  $$(sel + ' .chip').forEach(c => c.classList.toggle('on', c.dataset.v === val));
+}
+
+// ── wire up ──
+$('#go').addEventListener('click', () => { stopDemo(); run($('#q').value); });
+$('#q').addEventListener('keydown', e => {
+  stopDemo();
+  if (e.key === 'Enter') run($('#q').value);
+});
+$('#q').addEventListener('focus', stopDemo);
+$('#q').addEventListener('input', stopDemo);
+
+$$('#langs .chip').forEach(c => c.addEventListener('click', () => {
+  stopDemo();
+  state.lang = c.dataset.v;
+  setChip('#langs', c.dataset.v);
+  if ($('#q').value.trim()) run($('#q').value);
+}));
+
+$$('#sorts .chip').forEach(c => c.addEventListener('click', () => {
+  stopDemo();
+  state.sort = c.dataset.v;
+  setChip('#sorts', c.dataset.v);
+  if ($('#q').value.trim()) run($('#q').value);
+}));
+
+$$('.tag').forEach(t => t.addEventListener('click', () => {
+  stopDemo();
+  $('#q').value = t.dataset.q;
+  run(t.dataset.q);
+}));
+
+// ── boot ──
+demoLoop();
 </script>
 
 </body>
