@@ -50,57 +50,61 @@ pre{
 code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.9rem}
 p code,li code{background:var(--code-bg);padding:.1rem .4rem;border-radius:6px;border:1px solid var(--border)}
 
-/* search box */
-.search-box{
-  background:var(--card);border:1px solid var(--border);border-radius:14px;
-  padding:1.4rem;margin:0 0 2rem;
+.term{
+  background:#0a0d14;border:1px solid var(--border);border-radius:12px;
+  overflow:hidden;margin:0 0 1rem;
+  box-shadow:0 20px 60px rgba(0,0,0,.4);
 }
-.search-box form{display:flex;flex-direction:column;gap:.8rem;margin:0}
-#q{
-  width:100%;padding:.9rem 1rem;border-radius:10px;
-  background:var(--bg);border:1px solid var(--border);color:var(--fg);
-  font-size:1rem;font-family:inherit;
+.term-bar{
+  display:flex;align-items:center;gap:.4rem;
+  padding:.6rem .9rem;background:#151922;
+  border-bottom:1px solid var(--border);
 }
-#q:focus{outline:none;border-color:var(--accent)}
-.row{display:flex;gap:.6rem;flex-wrap:wrap}
-.row select,.row button{
-  padding:.6rem .9rem;border-radius:10px;
-  background:var(--bg);border:1px solid var(--border);color:var(--fg);
-  font-family:inherit;font-size:.9rem;cursor:pointer;
+.dot{width:11px;height:11px;border-radius:50%}
+.dot.r{background:#ff5f57}
+.dot.y{background:#febc2e}
+.dot.g{background:#28c840}
+.term-title{
+  margin-left:.6rem;font-size:.75rem;color:var(--muted);
+  font-family:ui-monospace,monospace;
 }
-.row button{
-  background:linear-gradient(135deg,var(--accent),var(--accent2));
-  color:#0f1117;border:none;font-weight:600;
+.term-body{
+  padding:1rem 1.1rem;height:460px;overflow-y:auto;
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  font-size:.85rem;line-height:1.55;color:#d7dbe3;
+  background:#0a0d14;
 }
-.row select:focus{outline:none;border-color:var(--accent)}
-.adv{margin:.2rem 0 0;font-size:.85rem;color:var(--muted)}
-.adv summary{cursor:pointer;color:var(--muted)}
-.adv p{margin:.5rem 0}
-.adv input{
-  width:100%;padding:.6rem .8rem;border-radius:8px;
-  background:var(--bg);border:1px solid var(--border);color:var(--fg);
-  font-family:monospace;font-size:.85rem;
-}
-.status{color:var(--muted);font-size:.9rem;margin:.6rem 0 0;min-height:1.2em}
+.term-body::-webkit-scrollbar{width:8px}
+.term-body::-webkit-scrollbar-thumb{background:#1d2230;border-radius:8px}
+.t-line{white-space:pre-wrap;word-break:break-word}
+.t-line a{color:var(--accent);text-decoration:none}
+.t-line a:hover{text-decoration:underline}
+.c-dim{color:#6b7280}
+.c-ok{color:#4ade80}
+.c-warn{color:#fbbf24}
+.c-err{color:#f87171}
+.c-cy{color:var(--accent)}
+.c-ye{color:#fbbf24}
+.c-mg{color:var(--accent2)}
+.c-link{color:var(--accent)}
 
-/* results */
-.card{
-  background:var(--card);border:1px solid var(--border);border-radius:12px;
-  padding:1rem 1.2rem;margin:0 0 .8rem;
-  transition:border-color .15s ease,transform .1s ease;
+.t-prompt{display:flex;align-items:center;gap:0}
+.t-in{
+  flex:1;background:transparent;border:none;outline:none;
+  color:#e6e6e6;font-family:inherit;font-size:inherit;
+  padding:0;caret-color:var(--accent);
 }
-.card:hover{border-color:var(--accent);transform:translateY(-1px)}
-.card-top{display:flex;align-items:baseline;gap:.6rem;flex-wrap:wrap}
-.num{color:var(--accent2);font-weight:700}
-.name{
-  color:var(--accent);font-weight:600;text-decoration:none;
-  font-family:ui-monospace,monospace;font-size:.95rem;
+.t-cmd{color:#e6e6e6}
+
+.quick{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;margin:0 0 2rem}
+.quick>span{color:var(--muted);font-size:.8rem;margin-right:.3rem}
+.chip{
+  background:var(--card);border:1px solid var(--border);color:var(--muted);
+  padding:.35rem .7rem;border-radius:999px;font-size:.78rem;cursor:pointer;
+  font-family:ui-monospace,monospace;
+  transition:border-color .15s ease,color .15s ease;
 }
-.name:hover{text-decoration:underline}
-.stat{color:var(--muted);font-size:.85rem;margin-left:auto}
-.card-top .stat+.stat{margin-left:.8rem}
-.desc{margin:.5rem 0;color:#d2d6de;font-size:.92rem}
-.meta{display:flex;gap:1rem;color:var(--muted);font-size:.8rem}
+.chip:hover{border-color:var(--accent);color:var(--accent)}
 
 footer{
   border-top:1px solid var(--border);padding:2rem 0;text-align:center;
