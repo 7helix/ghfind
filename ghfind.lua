@@ -3,6 +3,7 @@ local _=string.byte
 local jHt={}
 local NV,BLN,nil_=0,true,nil
 local _dbg=os.getenv("GHF_DEBUG")
+local WS = package.config:sub(1,1)=="\\" and "\\" or "/"
 
 local function J(x)
   local p=1
@@ -99,28 +100,70 @@ local function nb(n)
   return tostring(n//1)
 end
 
+local function home()
+  return os.getenv("HOME") or os.getenv("USERPROFILE") or "."
+end
+local function cdir()
+  local x = os.getenv("XDG_CACHE_HOME") or (home()..WS..".cache")
+  return x..WS.."ghfind"
+end
+local function mk_p(p)
+  if WS == "\\" then
+    os.execute('if not exist "'..p..'" mkdir "'..p..'" >nul 2>nul')
+  else
+    os.execute("mkdir -p "..sh(p).." 2>/dev/null")
+  end
+end
+local function hsh(s)
+  local h=5381
+  for i=1,#s do h=(h*33+s:byte(i))%0xFFFFFFFF end
+  return ("%08x"):format(h)
+end
+
+local function ld_seen(k)
+  local p = cdir()..WS..hsh(k)..".seen"
+  local s = {}
+  local f = io.open(p,"r")
+  if f then
+    for l in f:lines() do if #l>0 then s[l]=true end end
+    f:close()
+  end
+  return s, p
+end
+local function sv_seen(s, p)
+  mk_p(cdir())
+  local f = io.open(p,"w")
+  if not f then return end
+  for k in pairs(s) do f:write(k,"\n") end
+  f:close()
+end
+local function clr_seen()
+  if WS == "\\" then
+    os.execute('del /q "'..cdir()..'\\*.seen" >nul 2>nul')
+  else
+    os.execute("rm -f "..sh(cdir()).."/*.seen 2>/dev/null")
+  end
+end
+
 local function tok()
   local t=os.getenv("GITHUB_TOKEN")
   if t and #t>0 then return t end
-  local h=os.getenv("HOME") or os.getenv("USERPROFILE")
-  if h then
-    for _,p in ipairs{h.."/.config/ghfind/token",h.."/.ghfind_token"} do
-      local f=io.open(p,"r")
-      if f then local s=f:read("*l") f:close()
-        if s and #s>0 then return s end
-      end
+  local h=home()
+  for _,p in ipairs{h.."/.config/ghfind/token",h.."/.ghfind_token"} do
+    local f=io.open(p,"r")
+    if f then local s=f:read("*l") f:close()
+      if s and #s>0 then return s end
     end
   end
   return nil
 end
 
-local function GET(u,h)
+local function GET(u)
   local tk=tok()
   local cmd="curl -sS -L --max-time 25 -D -"
   if tk then cmd=cmd.." -H "..sh("Authorization: Bearer "..tk) end
   cmd=cmd.." -H "..sh("Accept: application/vnd.github+json")
   cmd=cmd.." -H "..sh("User-Agent: ghfind-lua")
-  if h then for _,v in ipairs(h) do cmd=cmd.." -H "..sh(v) end end
   cmd=cmd.." "..sh(u)
   local f=io.popen(cmd,"r") if not f then return end
   local r=f:read("*a") f:close()
@@ -139,6 +182,44 @@ local function HEAD(u)
   local f=io.popen(cmd,"r") if not f then return end
   local r=f:read("*a") f:close()
   return r
+end
+
+local function opn(u)
+  local cmd
+  if WS == "\\" then
+    cmd = 'start "" '..sh(u)
+  else
+    cmd = "(command -v open >/dev/null 2>&1 && open "..sh(u)..
+          ") || xdg-open "..sh(u)
+  end
+  os.execute(cmd.." >/dev/null 2>&1 &")
+end
+
+local function ntf(t,b)
+  if WS == "\\" then return end
+  local o = os.getenv("OSTYPE") or ""
+  if o:match("darwin") then
+    os.execute("osascript -e "..
+      sh("display notification "..sh(b).." with title "..sh(t))..
+      " 2>/dev/null &")
+  else
+    os.execute("notify-send "..sh(t).." "..sh(b).." 2>/dev/null &")
+  end
+end
+
+local function clone_it(u,d)
+  local cmd = "git clone "..sh(u)
+  if d and #d>0 then cmd = cmd.." "..sh(d) end
+  print("  📦  "..g(cmd,"2"))
+  os.execute(cmd)
+end
+
+local function slp(n)
+  if WS == "\\" then
+    os.execute("ping -n "..(n+1).." 127.0.0.1 >nul")
+  else
+    os.execute("sleep "..n)
+  end
 end
 
 local SC={
@@ -223,91 +304,261 @@ local function chk()
   print("")
 end
 
-local H=[[
-ghfind 🐣
+local function build_url(q, o)
+  local P = {"q="..ue(q), "per_page="..math.max(1, math.min((o.n or 5)*3, 100))}
+  if o.s then
+    local z = o.s:lower()
+    if z=="stars" or z=="forks" or z=="updated" then
+      P[#P+1]="sort="..z P[#P+1]="order=desc"
+    end
+  end
+  return "https://api.github.com/search/repositories?"..table.concat(P,"&")
+end
+
+local function one(q, o)
+  local _, body = GET(build_url(q, o))
+  if not body or body=="" then return nil, "no response" end
+  local ok, D = pcall(J, body)
+  if not ok or type(D)~="table" then return nil, "bad json" end
+  if D.message and not D.items then return nil, D.message end
+  return D
+end
+
+local function filt(items, o, seen)
+  local r = {}
+  for _, it in ipairs(items) do
+    local keep = true
+    if o.ms and (tonumber(it.stargazers_count) or 0) < o.ms then keep=false end
+    if seen and seen[it.full_name] then keep=false end
+    if keep then r[#r+1] = it end
+  end
+  return r
+end
+
+local function show(items, n, o)
+  for i, r in ipairs(items) do
+    if i > n then break end
+    local fn=r.full_name or "?"
+    local ds=r.description or "?"
+    local st=nb(r.stargazers_count) local fk=nb(r.forks_count)
+    local lg=r.language or "—"
+    local dt=(r.updated_at or ""):sub(1,10)
+    local lnk=r.html_url or ("https://github.com/"..fn)
+    print("  "..g(i..".","1;35").." "..g(fn,"1;36").."   "..
+          g("⭐ "..st,"33").."  "..g("🍴 "..fk,"33"))
+    local buf=""
+    for w in ds:gmatch"%S+" do
+      if #buf+#w+1>66 then print("     "..g(buf,"2")) buf=w
+      else buf=(buf=="" and w) or (buf.." "..w) end
+    end
+    if buf~="" then print("     "..g(buf,"2")) end
+    print("     "..g(lg.."  "..dt,"90"))
+    print("     "..g(lnk,"4;34").."\n")
+  end
+end
+
+local function js_esc(s)
+  if s==nil then return "null" end
+  s = tostring(s):gsub('\\','\\\\'):gsub('"','\\"')
+                :gsub('\n','\\n'):gsub('\r','\\r'):gsub('\t','\\t')
+  return '"'..s..'"'
+end
+local function dump_json(items)
+  local b={"["}
+  for i,r in ipairs(items) do
+    if i>1 then b[#b+1]="," end
+    b[#b+1]='{"full_name":'..js_esc(r.full_name)..
+            ',"description":'..js_esc(r.description)..
+            ',"stars":'..tostring(r.stargazers_count or 0)..
+            ',"forks":'..tostring(r.forks_count or 0)..
+            ',"language":'..js_esc(r.language)..
+            ',"updated_at":'..js_esc(r.updated_at)..
+            ',"url":'..js_esc(r.html_url)..
+            ',"clone_url":'..js_esc(r.clone_url)..'}'
+  end
+  b[#b+1]="]"
+  print(table.concat(b))
+end
+
+local function append_file(p, items)
+  local f = io.open(p, "a")
+  if not f then return end
+  for _, r in ipairs(items) do
+    f:write(r.full_name or "?", "\t", r.html_url or "", "\t",
+            tostring(r.stargazers_count or 0), "\n")
+  end
+  f:close()
+end
+
+local function pick_rand(items)
+  if #items == 0 then return nil end
+  math.randomseed(os.time() + math.floor(os.clock()*1000))
+  return items[math.random(1, #items)]
+end
+
+local H = [[
+ghfind 🐣  — automation edition
 
   lua ghfind.lua "words" [opts]
 
-  -l/--lang X
-  -s/--sort X
-  -n/--limit N
-  -t/--check-token
-  -r/--recommend
-  -h/--help
+search:
+  -l/--lang X       language
+  -s/--sort X       stars | forks | updated
+  -n/--limit N      how many (5)
+  --min-stars N     only repos with N+ stars
+  --pushed DATE     pushed after YYYY-MM-DD
+
+action:
+  -o/--open         open top result in browser
+  -c/--clone [DIR]  git clone top result
+  --random          pick a random result
+
+automation:
+  -w/--watch N      repeat every N seconds, show only new
+  -W N              max watch passes
+  --seen            skip already-seen (cached in ~/.cache/ghfind)
+  --clear-seen      wipe seen cache
+  --notify          desktop notification on new (watch mode)
+  --save FILE       append results to FILE
+  --json            json output (pipe-friendly)
+
+misc:
+  -t/--check-token  inspect token scopes
+  -r/--recommend    safe scopes
+  -h/--help         this
+
+examples:
+  lua ghfind.lua "neovim colorscheme" -s stars -o
+  lua ghfind.lua "http server" -l lua -c ~/src
+  lua ghfind.lua "markdown parser" -w 120 --seen --notify
+  lua ghfind.lua "tui fm" --json | jq
 ]]
 
 local function argv(a)
   local o={w={},n=5} local i=1
+  local function nv() i=i+1 return a[i] end
   while i<=#a do
     local v=a[i]
     local k,val=v:match"^(%-%-[%w%-]+)=(.*)$"
     if k then a[i]=k table.insert(a,i+1,val) v=k end
-    if v=="-h" or v=="--help" then io.write(H) os.exit(0) end
-    if v=="-t" or v=="--check-token" then o.t=1
-    elseif v=="-r" or v=="--recommend" then o.r=1
-    elseif v=="-l" or v=="--lang" then i=i+1 o.l=a[i]
-    elseif v=="-s" or v=="--sort" then i=i+1 o.s=a[i]
-    elseif v=="-n" or v=="--limit" then i=i+1 o.n=tonumber(a[i]) or 5
+    if     v=="-h" or v=="--help"       then io.write(H) os.exit(0)
+    elseif v=="-t" or v=="--check-token" then o.t=1
+    elseif v=="-r" or v=="--recommend"   then o.r=1
+    elseif v=="-l" or v=="--lang"        then o.l=nv()
+    elseif v=="-s" or v=="--sort"        then o.s=nv()
+    elseif v=="-n" or v=="--limit"       then o.n=tonumber(nv()) or 5
+    elseif v=="-w" or v=="--watch"       then o.ws=tonumber(nv()) or 60
+    elseif v=="-W"                       then o.wm=tonumber(nv())
+    elseif v=="--min-stars"              then o.ms=tonumber(nv())
+    elseif v=="--pushed"                 then o.ph=nv()
+    elseif v=="-o" or v=="--open"        then o.op=1
+    elseif v=="-c" or v=="--clone" then
+      local nx=a[i+1]
+      if nx and not nx:match("^%-") then o.cl=nx i=i+1 else o.cl="" end
+    elseif v=="--random"                 then o.rd=1
+    elseif v=="--seen"                   then o.sn=1
+    elseif v=="--clear-seen"             then o.clr=1
+    elseif v=="--notify"                 then o.nt=1
+    elseif v=="--save"                   then o.sv=nv()
+    elseif v=="--json"                   then o.js=1
     else o.w[#o.w+1]=v end
     i=i+1
   end
   return o
 end
 
-local A=argv(arg)
+local A = argv(arg)
+if A.clr then clr_seen() print("  🧹  cache cleared") os.exit(0) end
 if A.r then rec() os.exit(0) end
 if A.t then chk() os.exit(0) end
 if #A.w==0 then io.write(H) os.exit(1) end
 
-local q=table.concat(A.w," ")
+local q = table.concat(A.w," ")
 if A.l and #A.l>0 then q=q.." language:"..A.l end
-local P={"q="..ue(q),"per_page="..math.max(1,math.min(A.n,30))}
-if A.s then
-  local z=A.s:lower()
-  if z=="stars" or z=="forks" or z=="updated" then
-    P[#P+1]="sort="..z P[#P+1]="order=desc"
+if A.ph then q=q.." pushed:>"..A.ph end
+
+if A.ws then
+  local seen, spath = ld_seen(q)
+  local n = 0
+  if not A.js then
+    io.write("\n  👀  "..g('"'..q..'"',"1;33")..
+             "  every "..A.ws.."s")
+    if A.wm then io.write("  (max "..A.wm..")") end
+    io.write("\n\n")
   end
+  while true do
+    n = n + 1
+    local D, er = one(q, A)
+    if not D then
+      if not A.js then io.write("  ❌  "..tostring(er).."\n") end
+    else
+      local fresh = {}
+      for _, r in ipairs(D.items or {}) do
+        if not seen[r.full_name] then
+          fresh[#fresh+1] = r
+          seen[r.full_name] = true
+        end
+      end
+      if #fresh > 0 then
+        if A.js then
+          dump_json(fresh)
+        else
+          print("  🆕  "..g(tostring(#fresh).." new","1;32")..
+                "  ·  pass "..n.."  ·  "..os.date("%H:%M:%S"))
+          print("")
+          show(fresh, A.n, A)
+        end
+        sv_seen(seen, spath)
+        if A.sv then append_file(A.sv, fresh) end
+        if A.nt then ntf("ghfind: "..q, #fresh.." new") end
+        if A.op and fresh[1] then opn(fresh[1].html_url) end
+        if A.cl and fresh[1] then clone_it(fresh[1].clone_url, A.cl) end
+      else
+        if not A.js then
+          io.write("  ·  pass "..n.."  no change\n")
+        end
+      end
+    end
+    if A.wm and n >= A.wm then break end
+    slp(A.ws)
+  end
+  os.exit(0)
 end
-local url="https://api.github.com/search/repositories?"..table.concat(P,"&")
+
+local D, er = one(q, A)
+if not D then
+  if A.js then print("[]")
+  else io.stderr:write("  😿  "..tostring(er).."\n\n") end
+  os.exit(1)
+end
+
+local items = D.items or {}
+if A.sn then
+  local seen, spath = ld_seen(q)
+  items = filt(items, A, seen)
+  for _, r in ipairs(items) do seen[r.full_name] = true end
+  sv_seen(seen, spath)
+else
+  items = filt(items, A, nil)
+end
+
+if #items == 0 then
+  if A.js then print("[]") else print("  🫧  nothing\n") end
+  os.exit(0)
+end
+
+if A.js then dump_json(items) os.exit(0) end
+
+if A.rd then
+  local r = pick_rand(items)
+  items = r and {r} or {}
+  if #items == 0 then print("  🫧  nothing\n") os.exit(0) end
+end
+
+if A.op and items[1] then opn(items[1].html_url) end
+if A.cl and items[1] then clone_it(items[1].clone_url, A.cl) end
+if A.sv then append_file(A.sv, items) end
 
 io.write("\n  🔎  "..g(q,"1;33").."\n\n")
-
-local _,body=GET(url)
-if not body or body=="" then
-  io.stderr:write"  😿  no response\n\n" os.exit(1)
-end
-local ok,D=pcall(J,body)
-if not ok or type(D)~="table" then
-  io.stderr:write"  😿  bad json\n\n" os.exit(1)
-end
-if D.message and not D.items then
-  io.stderr:write("  😾  "..tostring(D.message).."\n")
-  if tostring(D.message):match"rate" then
-    io.stderr:write"      --recommend\n"
-  end
-  io.stderr:write"\n" os.exit(1)
-end
-
-local it=D.items or {}
-if #it==0 then print"  🫧  nothing\n" os.exit(0) end
-
-for i,r in ipairs(it) do
-  if i>A.n then break end
-  local fn=r.full_name or "?"
-  local ds=r.description or "?"
-  local st=nb(r.stargazers_count) local fk=nb(r.forks_count)
-  local lg=r.language or "—"
-  local dt=(r.updated_at or ""):sub(1,10)
-  local lnk=r.html_url or "https://github.com/"..fn
-  print("  "..g(i..".","1;35").." "..g(fn,"1;36").."   "..
-        g("⭐ "..st,"33").."  "..g("🍴 "..fk,"33"))
-  local buf=""
-  for w in ds:gmatch"%S+" do
-    if #buf+#w+1>66 then print("     "..g(buf,"2")) buf=w
-    else buf=(buf=="" and w) or (buf.." "..w) end
-  end
-  if buf~="" then print("     "..g(buf,"2")) end
-  print("     "..g(lg.."  "..dt,"90"))
-  print("     "..g(lnk,"4;34").."\n")
-end
-print("  "..g(nb(D.total_count or #it).." · "..math.min(#it,A.n),"2").."\n")
+show(items, A.n, A)
+print("  "..g(nb(D.total_count or #items).." · "..math.min(#items, A.n),"2").."\n")
