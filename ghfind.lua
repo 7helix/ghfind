@@ -1,8 +1,5 @@
 #!/usr/bin/env lua
 local _=string.byte
-local jHt={}
-local NV,BLN,nil_=0,true,nil
-local _dbg=os.getenv("GHF_DEBUG")
 local WS = package.config:sub(1,1)=="\\" and "\\" or "/"
 
 local function J(x)
@@ -26,9 +23,8 @@ local function J(x)
       if c=='"' then p=p+1 break end
       if c=="\\" then
         local e=x:sub(p+1,p+1) p=p+2
-        t[#t+1] = (e=="n" and "\n") or (e=="t" and "\t") or
-                  (e=="r" and "\r") or (e=="b" and "\b") or
-                  (e=="f" and "\f") or e
+        t[#t+1]=(e=="n" and "\n") or (e=="t" and "\t") or
+                (e=="r" and "\r") or e
         if e=="u" then
           local cp=tonumber(x:sub(p,p+3),16) or 63 p=p+4
           if cp>=0xD800 and cp<=0xDBFF and x:sub(p,p+1)=="\\u" then
@@ -88,73 +84,82 @@ local function g(s,k)
   k=k or "0" return C and ("\27["..k.."m"..tostring(s).."\27[0m") or tostring(s)
 end
 local function sh(s) return "'"..tostring(s):gsub("'","'\\''").."'" end
-local function ue(s)
-  return (tostring(s):gsub("[^%w%-%.%_%~]",function(c)
-    return string.format("%%%02X",_(c))
-  end))
-end
+local function ue(s) return (tostring(s):gsub("[^%w%-%.%_%~]",function(c)
+  return string.format("%%%02X",_(c)) end)) end
 local function nb(n)
   n=tonumber(n) or 0
   if n>=1e6 then return ("%.1fM"):format(n/1e6) end
   if n>=1e3 then return ("%.1fk"):format(n/1e3) end
   return tostring(n//1)
 end
-
-local function home()
-  return os.getenv("HOME") or os.getenv("USERPROFILE") or "."
+local function pad(s,n)
+  s=tostring(s) if #s>=n then return s:sub(1,n-1).."…" end
+  return s..string.rep(" ",n-#s)
 end
+
+local function home() return os.getenv("HOME") or os.getenv("USERPROFILE") or "." end
 local function cdir()
-  local x = os.getenv("XDG_CACHE_HOME") or (home()..WS..".cache")
+  local x=os.getenv("XDG_CACHE_HOME") or (home()..WS..".cache")
   return x..WS.."ghfind"
 end
-local function mk_p(p)
-  if WS == "\\" then
-    os.execute('if not exist "'..p..'" mkdir "'..p..'" >nul 2>nul')
-  else
-    os.execute("mkdir -p "..sh(p).." 2>/dev/null")
-  end
+local function mkp(p)
+  if WS=="\\" then os.execute('if not exist "'..p..'" mkdir "'..p..'" >nul 2>nul')
+  else os.execute("mkdir -p "..sh(p).." 2>/dev/null") end
 end
 local function hsh(s)
-  local h=5381
-  for i=1,#s do h=(h*33+s:byte(i))%0xFFFFFFFF end
+  local h=5381 for i=1,#s do h=(h*33+s:byte(i))%0xFFFFFFFF end
   return ("%08x"):format(h)
 end
 
-local function ld_seen(k)
-  local p = cdir()..WS..hsh(k)..".seen"
-  local s = {}
-  local f = io.open(p,"r")
-  if f then
-    for l in f:lines() do if #l>0 then s[l]=true end end
-    f:close()
-  end
-  return s, p
+local function cfg_path() return home()..WS..".config"..WS.."ghfind"..WS.."config.lua" end
+
+local function load_cfg()
+  local f=io.open(cfg_path(),"r")
+  if not f then return {} end
+  local s=f:read("*a") f:close()
+  local fn=loadstring or load
+  local ok,r=pcall(fn,"return "..s)
+  if ok and type(r)=="table" then return r end
+  return {}
 end
-local function sv_seen(s, p)
-  mk_p(cdir())
-  local f = io.open(p,"w")
+local function save_cfg(c)
+  local d=cfg_path():match("^(.*)"..WS.."[^"..WS.."]+$")
+  if d then mkp(d) end
+  local f=io.open(cfg_path(),"w")
   if not f then return end
-  for k in pairs(s) do f:write(k,"\n") end
-  f:close()
+  f:write("{\n")
+  for k,v in pairs(c) do
+    if type(v)=="string" then f:write(("  %s=%q,\n"):format(k,v))
+    elseif type(v)=="number" or type(v)=="boolean" then
+      f:write(("  %s=%s,\n"):format(k,tostring(v)))
+    end
+  end
+  f:write("}\n") f:close()
+end
+
+local function ld_seen(k)
+  local p=cdir()..WS..hsh(k)..".seen"
+  local s={} local f=io.open(p,"r")
+  if f then for l in f:lines() do if #l>0 then s[l]=true end end f:close() end
+  return s,p
+end
+local function sv_seen(s,p)
+  mkp(cdir()) local f=io.open(p,"w")
+  if not f then return end
+  for k in pairs(s) do f:write(k,"\n") end f:close()
 end
 local function clr_seen()
-  if WS == "\\" then
-    os.execute('del /q "'..cdir()..'\\*.seen" >nul 2>nul')
-  else
-    os.execute("rm -f "..sh(cdir()).."/*.seen 2>/dev/null")
-  end
+  if WS=="\\" then os.execute('del /q "'..cdir()..'\\*.seen" >nul 2>nul')
+  else os.execute("rm -f "..sh(cdir()).."/*.seen 2>/dev/null") end
 end
 
 local function tok()
   local t=os.getenv("GITHUB_TOKEN")
   if t and #t>0 then return t end
-  local h=home()
-  for _,p in ipairs{h.."/.config/ghfind/token",h.."/.ghfind_token"} do
-    local f=io.open(p,"r")
-    if f then local s=f:read("*l") f:close()
-      if s and #s>0 then return s end
-    end
-  end
+  local f=io.open(home().."/.config/ghfind/token","r")
+  if f then local s=f:read("*l") f:close() if s and #s>0 then return s end end
+  local c=load_cfg()
+  if c.token and #c.token>0 then return c.token end
   return nil
 end
 
@@ -165,7 +170,7 @@ local function GET(u)
   cmd=cmd.." -H "..sh("Accept: application/vnd.github+json")
   cmd=cmd.." -H "..sh("User-Agent: ghfind-lua")
   cmd=cmd.." "..sh(u)
-  local f=io.popen(cmd,"r") if not f then return end
+  local f=io.popen(cmd,"r") if not f then return end end
   local r=f:read("*a") f:close()
   local hdr,bdy=r:match("^(.-)\r?\n\r?\n(.*)$")
   if not hdr then return nil,r end
@@ -179,148 +184,435 @@ local function HEAD(u)
   cmd=cmd.." -H "..sh("Accept: application/vnd.github+json")
   cmd=cmd.." -H "..sh("User-Agent: ghfind-lua")
   cmd=cmd.." "..sh(u)
-  local f=io.popen(cmd,"r") if not f then return end
+  local f=io.popen(cmd,"r") if not f then return end end
   local r=f:read("*a") f:close()
   return r
 end
 
 local function opn(u)
-  local cmd
-  if WS == "\\" then
-    cmd = 'start "" '..sh(u)
-  else
-    cmd = "(command -v open >/dev/null 2>&1 && open "..sh(u)..
-          ") || xdg-open "..sh(u)
-  end
-  os.execute(cmd.." >/dev/null 2>&1 &")
+  if WS=="\\" then os.execute('start "" '..sh(u).." >nul 2>nul")
+  else os.execute("(command -v open >/dev/null 2>&1 && open "..sh(u)..
+    " ) || xdg-open "..sh(u).." >/dev/null 2>&1 &") end
 end
 
 local function ntf(t,b)
-  if WS == "\\" then return end
-  local o = os.getenv("OSTYPE") or ""
+  if WS=="\\" then return end
+  local o=os.getenv("OSTYPE") or ""
   if o:match("darwin") then
-    os.execute("osascript -e "..
-      sh("display notification "..sh(b).." with title "..sh(t))..
-      " 2>/dev/null &")
-  else
-    os.execute("notify-send "..sh(t).." "..sh(b).." 2>/dev/null &")
-  end
-end
-
-local function clone_it(u,d)
-  local cmd = "git clone "..sh(u)
-  if d and #d>0 then cmd = cmd.." "..sh(d) end
-  print("  📦  "..g(cmd,"2"))
-  os.execute(cmd)
+    os.execute("osascript -e "..sh("display notification "..sh(b)..
+      " with title "..sh(t)).." 2>/dev/null &")
+  else os.execute("notify-send "..sh(t).." "..sh(b).." 2>/dev/null &") end
 end
 
 local function slp(n)
-  if WS == "\\" then
-    os.execute("ping -n "..(n+1).." 127.0.0.1 >nul")
-  else
-    os.execute("sleep "..n)
-  end
+  if WS=="\\" then os.execute("ping -n "..(n+1).." 127.0.0.1 >nul")
+  else os.execute("sleep "..n) end
 end
 
-local SC={
-  [""]                 ={"ok",        "none needed"},
-  ["public_repo"]      ={"ok",        "public rw"},
-  ["repo:status"]      ={"mild",      "statuses"},
-  ["repo_deployment"]  ={"mild",      "deploys"},
-  ["repo:invite"]      ={"mild",      "invites"},
-  ["read:user"]        ={"mild",      "profile"},
-  ["user:email"]       ={"spicy",     "email"},
-  ["user:follow"]      ={"spicy",     "follow"},
-  ["notifications"]    ={"spicy",     "notifs"},
-  ["read:project"]     ={"spicy",     "projects"},
-  ["gist"]             ={"spicy",     "gists"},
-  ["write:packages"]   ={"spicy",     "pkgs"},
-  ["repo"]             ={"dangerous", "private repos"},
-  ["user"]             ={"dangerous", "all user data"},
-  ["project"]          ={"dangerous", "projects"},
-  ["security_events"]  ={"dangerous", "sec alerts"},
-  ["delete_repo"]      ={"dangerous", "delete repos"},
-  ["admin:org"]        ={"dangerous", "org admin"},
-  ["admin:public_key"] ={"dangerous", "ssh keys"},
-  ["admin:repo_hook"]  ={"dangerous", "webhooks"},
-  ["delete:packages"]  ={"dangerous", "delete pkgs"},
-  ["workflow"]         ={"dangerous", "actions"},
-}
-local ICO={ok="✅",mild="🟢",spicy="🟠",dangerous="🚨"}
-local CLR={ok="1;32",mild="1;36",spicy="1;33",dangerous="1;31"}
-local function sc(n) return SC[n] or {"spicy","unknown"} end
-
-local function rec()
-  print("\n  🐣  "..g("recommended scopes","1;36").."\n")
-  print("  "..g("✅ minimum:","1;32").."  none")
-  print("  "..g("🟢 ok:","1;36").."  public_repo\n")
-  print("  "..g("🚨 avoid:","1;31"))
-  for _,k in ipairs{"repo","user","security_events","delete_repo",
-                    "admin:org","workflow","admin:public_key","delete:packages"} do
-    print("     "..ICO[sc(k)[1]].."  "..g(k,"1;31"))
-  end
-  print("\n  "..g("https://github.com/settings/tokens","2").."\n")
+local function ask(prompt)
+  io.write(prompt) io.flush()
+  local l=io.read("*l") return l or ""
 end
 
-local function chk()
-  local tk=tok()
-  if not tk then
-    print("\n  🐾  "..g("no token","1;33"))
-    print("  "..g("export GITHUB_TOKEN=ghp_xxx","2"))
-    print("  "..g("or ~/.config/ghfind/token","2").."\n") return
-  end
-  print("\n  🔐  "..g("checking...","1;36").."\n")
-  local h=HEAD("https://api.github.com/user")
-  if not h then return end
-  local code
-  for l in h:gmatch"[^\r\n]+" do
-    code=l:match"^HTTP/%d%.%d%s+(%d+)" or code
-  end
-  if code=="401" then
-    print("  🚨  "..g("invalid token","1;31").."\n") return
-  end
-  local ol=h:match"\n[Oo]auth%-[Ss]copes:%s*([^\r\n]+)"
-          or h:match"^[Oo]auth%-[Ss]copes:%s*([^\r\n]+)"
-  local z={}
-  if ol then for s in ol:gmatch"[^,%s]+" do z[#z+1]=s end end
-  if #z==0 then
-    print("  "..g("scopes:","1;32").." none")
-    print("  ✅  "..g("perfect","1;32").."\n") return
-  end
-  local rk={dangerous=1,spicy=2,mild=3,ok=4}
-  table.sort(z,function(a,b) return (rk[sc(a)[1]] or 9)<(rk[sc(b)[1]] or 9) end)
-  local t={ok=0,mild=0,spicy=0,dangerous=0}
-  for _,s in ipairs(z) do
-    local v=sc(s) t[v[1]]=t[v[1]]+1
-    print(("  %s %s"):format(ICO[v[1]],g(s,CLR[v[1]])))
-  end
+local function clr()
+  if WS=="\\" then os.execute("cls") else os.execute("clear") end
+end
+
+local function hline(w)
+  print(g(string.rep("─",w or 60),"2"))
+end
+
+local function banner()
   print("")
-  print("  "..g(t.ok.." ok  "..t.mild.." mild  "..t.spicy.." spicy  "..
-        t.dangerous.." danger","2"))
-  print("")
-  if t.dangerous>0 then print("  🚨  "..g("overkill","1;31"))
-  elseif t.spicy>0 then print("  🟠  "..g("too much","1;33"))
-  else print("  ✅  "..g("clean","1;32")) end
+  print("  "..g("🐣 ghfind","1;36").."  "..g("repo searcher","2"))
   print("")
 end
 
-local function build_url(q, o)
-  local P = {"q="..ue(q), "per_page="..math.max(1, math.min((o.n or 5)*3, 100))}
-  if o.s then
-    local z = o.s:lower()
-    if z=="stars" or z=="forks" or z=="updated" then
-      P[#P+1]="sort="..z P[#P+1]="order=desc"
+local function menu()
+  banner()
+  print("  "..g("1","1;33").."  Search")
+  print("  "..g("2","1;33").."  Filters")
+  print("  "..g("3","1;33").."  Watch")
+  print("  "..g("4","1;33").."  Favorites")
+  print("  "..g("5","1;33").."  History")
+  print("  "..g("6","1;33").."  Token")
+  print("  "..g("7","1;33").."  Settings")
+  print("  "..g("8","1;33").."  Help")
+  print("  "..g("9","1;33").."  Clear screen")
+  print("  "..g("0","1;33").."  Exit")
+  print("")
+  return ask("  "..g("›","1;36").." ")
+end
+
+local FILT = { lang="", sort="", stars="", age="", limit=5 }
+
+local function show_filters()
+  print("")
+  print("  "..g("active filters","1;36"))
+  hline(40)
+  print("  language  "..g(FILT.lang~="" and FILT.lang or "—","1;33"))
+  print("  sort      "..g(FILT.sort~="" and FILT.sort or "—","1;33"))
+  print("  min stars "..g(FILT.stars~="" and FILT.stars or "—","1;33"))
+  print("  max age   "..g(FILT.age~="" and (FILT.age.."d") or "—","1;33"))
+  print("  limit     "..g(FILT.limit,"1;33"))
+  print("")
+end
+
+local function build_q(q)
+  local s=q
+  if FILT.lang~="" then s=s.." language:"..FILT.lang end
+  if FILT.stars~="" then s=s.." stars:>="..FILT.stars end
+  if FILT.age~="" then
+    local d=os.date("*t")
+    local t=os.time({year=d.year,month=d.month,day=d.day})
+    t=t-tonumber(FILT.age)*86400
+    s=s.." pushed:>"..os.date("%Y-%m-%d",t)
+  end
+  return s
+end
+
+local function run_search(q,opts)
+  local url="https://api.github.com/search/repositories?q="..ue(build_q(q))..
+            "&per_page="..math.max(1,math.min((opts and opts.per or FILT.limit)*3,100))
+  if FILT.sort~="" then url=url.."&sort="..FILT.sort.."&order=desc" end
+  local _,body=GET(url)
+  if not body or body=="" then return nil,"no response" end
+  local ok,D=pcall(J,body)
+  if not ok or type(D)~="table" then return nil,"bad json" end
+  if D.message and not D.items then return nil,D.message end
+  return D
+end
+
+local function print_results(items,n)
+  if #items==0 then print("  "..g("🫧 nothing","2")) return end
+  for i,r in ipairs(items) do
+    if i>n then break end
+    local fn=r.full_name or "?"
+    local ds=r.description or "—"
+    local st=nb(r.stargazers_count) local fk=nb(r.forks_count)
+    local lg=r.language or "—"
+    local dt=(r.updated_at or ""):sub(1,10)
+    print("  "..g(i..".","1;35").." "..g(fn,"1;36")..
+          "   "..g("⭐ "..st,"33").."  "..g("🍴 "..fk,"33"))
+    local buf=""
+    for w in ds:gmatch"%S+" do
+      if #buf+#w+1>66 then print("     "..g(buf,"2")) buf=w
+      else buf=(buf=="" and w) or (buf.." "..w) end
+    end
+    if buf~="" then print("     "..g(buf,"2")) end
+    print("     "..g(lg.."  "..dt,"90"))
+    print("     "..g(r.html_url or "","4;34"))
+    print("")
+  end
+end
+
+local function do_search()
+  clr() banner()
+  local q=ask("  "..g("query","1;36").." › ")
+  if q=="" then return end
+  print("")
+  print("  "..g("🔎 searching…","2"))
+  local D,er=run_search(q)
+  if not D then
+    print("  "..g("😿 "..tostring(er),"1;31")) slp(2) return
+  end
+  clr() banner()
+  print("  "..g("query","2").."  "..g(q,"1;33"))
+  show_filters()
+  local items=D.items or {}
+  print_results(items,FILT.limit)
+  print("  "..g(nb(D.total_count or #items).." total","2"))
+  print("")
+  local a=ask("  "..g("[o]pen first  [c]lone  [s]ave  [enter]back › ","1;36"))
+  if a=="o" and items[1] then opn(items[1].html_url)
+  elseif a=="c" and items[1] then
+    local d=ask("  clone to (blank = cwd) › ")
+    local cmd="git clone "..sh(items[1].clone_url or items[1].html_url..".git")
+    if d~="" then cmd=cmd.." "..sh(d) end
+    print("  "..g(cmd,"2")) os.execute(cmd)
+    ask("  [enter]")
+  elseif a=="s" then
+    local f=ask("  save to › ")
+    if f~="" then
+      local fp=io.open(f,"a")
+      if fp then
+        for _,r in ipairs(items) do
+          fp:write(r.full_name or "?","\t",r.html_url or "","\t",
+                   tostring(r.stargazers_count or 0),"\n")
+        end
+        fp:close() print("  "..g("saved","1;32")) slp(1)
+      end
     end
   end
-  return "https://api.github.com/search/repositories?"..table.concat(P,"&")
 end
 
-local function one(q, o)
-  local _, body = GET(build_url(q, o))
-  if not body or body=="" then return nil, "no response" end
-  local ok, D = pcall(J, body)
-  if not ok or type(D)~="table" then return nil, "bad json" end
-  if D.message and not D.items then return nil, D.message end
+local function do_filters()
+  while true do
+    clr() banner()
+    show_filters()
+    print("  "..g("1","1;33").."  language  (lua/python/rust/…)")
+    print("  "..g("2","1;33").."  sort      (stars/forks/updated)")
+    print("  "..g("3","1;33").."  min stars")
+    print("  "..g("4","1;33").."  max age (days)")
+    print("  "..g("5","1;33").."  limit")
+    print("  "..g("6","1;33").."  reset all")
+    print("  "..g("0","1;33").."  back")
+    print("")
+    local c=ask("  "..g("›","1;36").." ")
+    if c=="0" then return end
+    if c=="1" then FILT.lang=ask("  language › ")
+    elseif c=="2" then
+      local s=ask("  sort (stars/forks/updated) › ")
+      if s=="stars" or s=="forks" or s=="updated" then FILT.sort=s
+      else FILT.sort="" end
+    elseif c=="3" then FILT.stars=ask("  min stars › ")
+    elseif c=="4" then FILT.age=ask("  max age (days) › ")
+    elseif c=="5" then FILT.limit=tonumber(ask("  limit › ")) or 5
+    elseif c=="6" then FILT={lang="",sort="",stars="",age="",limit=5} end
+  end
+end
+
+local function do_watch()
+  clr() banner()
+  local q=ask("  query › ")
+  if q=="" then return end
+  local secs=tonumber(ask("  every how many seconds? › ")) or 60
+  local maxp=tonumber(ask("  max passes (blank = forever) › "))
+  local notify=ask("  desktop notifications? [y/N] › "):lower()=="y"
+  local seen,sp=ld_seen(q)
+  local n=0
+  print("")
+  print("  "..g("👀 watching — ctrl-c to stop","1;36"))
+  while true do
+    n=n+1
+    local D,er=run_search(q,{per=FILT.limit})
+    if not D then
+      print("  "..g("❌ "..tostring(er),"1;31"))
+    else
+      local fresh={}
+      for _,r in ipairs(D.items or {}) do
+        if not seen[r.full_name] then
+          fresh[#fresh+1]=r seen[r.full_name]=true
+        end
+      end
+      if #fresh>0 then
+        print("")
+        print("  "..g("🆕 "..#fresh.." new","1;32")..
+              "  ·  pass "..n.."  ·  "..os.date("%H:%M:%S"))
+        print_results(fresh,FILT.limit)
+        sv_seen(seen,sp)
+        if notify then ntf("ghfind: "..q,#fresh.." new") end
+      else
+        io.write("  ·  pass "..n.."  no change\n")
+      end
+    end
+    if maxp and n>=maxp then break end
+    slp(secs)
+  end
+  ask("  [enter]")
+end
+
+local function do_favs()
+  local fp=home()..WS..".config"..WS.."ghfind"..WS.."favorites.txt"
+  while true do
+    clr() banner()
+    local list={}
+    local f=io.open(fp,"r")
+    if f then for l in f:lines() do
+      if #l>0 then
+        local name,url=l:match("^(.-)\t(.*)$")
+        if name then list[#list+1]={name=name,url=url or ""} end
+      end
+    end f:close() end
+    print("  "..g("★ favorites","1;36").."  "..g("("..#list..")","2"))
+    hline(40)
+    if #list==0 then print("  "..g("empty","2"))
+    else
+      for i,fv in ipairs(list) do
+        print("  "..g(i..".","1;35").." "..g(fv.name,"1;36"))
+      end
+    end
+    print("")
+    print("  "..g("a","1;33").."  add      "..g("d","1;33").."  delete")
+    print("  "..g("o","1;33").."  open #   "..g("e","1;33").."  export")
+    print("  "..g("0","1;33").."  back")
+    print("")
+    local c=ask("  "..g("›","1;36").." ")
+    if c=="0" then return end
+    if c=="a" then
+      local n=ask("  name › ")
+      local u=ask("  url › ")
+      if n~="" and u~="" then
+        local d=cfg_path():match("^(.*)"..WS.."[^"..WS.."]+$")
+        if d then mkp(d) end
+        local w=io.open(fp,"a")
+        if w then w:write(n,"\t",u,"\n") w:close() end
+      end
+    elseif c=="d" then
+      local i=tonumber(ask("  number › "))
+      if i and list[i] then
+        list[i]=nil
+        local w=io.open(fp,"w")
+        if w then for _,fv in ipairs(list) do
+          w:write(fv.name,"\t",fv.url,"\n") end w:close() end
+      end
+    elseif c=="o" then
+      local i=tonumber(ask("  number › "))
+      if i and list[i] then opn(list[i].url) end
+    elseif c=="e" then
+      for _,fv in ipairs(list) do print(fv.name.."\t"..fv.url) end
+      ask("  [enter]")
+    end
+  end
+end
+
+local function do_hist()
+  local hp=home()..WS..".config"..WS.."ghfind"..WS.."history.txt"
+  while true do
+    clr() banner()
+    local list={}
+    local f=io.open(hp,"r")
+    if f then for l in f:lines() do
+      if #l>0 and #list<30 then list[#list+1]=l end
+    end f:close() end
+    print("  "..g("▤ history","1;36").."  "..g("("..#list..")","2"))
+    hline(40)
+    if #list==0 then print("  "..g("empty","2"))
+    else
+      for i,h in ipairs(list) do
+        print("  "..g(i..".","1;35").." "..g(h,"1;36"))
+      end
+    end
+    print("")
+    print("  "..g("r","1;33").."  rerun #   "..g("c","1;33").."  clear")
+    print("  "..g("0","1;33").."  back")
+    print("")
+    local c=ask("  "..g("›","1;36").." ")
+    if c=="0" then return end
+    if c=="c" then os.remove(hp)
+    elseif c=="r" then
+      local i=tonumber(ask("  number › "))
+      if i and list[i] then
+        print("") print("  "..g("🔎 "..list[i],"1;36"))
+        local D=run_search(list[i])
+        if D then print_results(D.items or {},FILT.limit) end
+        ask("  [enter]")
+      end
+    end
+  end
+end
+
+local function hist_push(q)
+  local hp=home()..WS..".config"..WS.."ghfind"..WS.."history.txt"
+  local d=hp:match("^(.*)"..WS.."[^"..WS.."]+$")
+  if d then mkp(d) end
+  local f=io.open(hp,"a")
+  if f then f:write(q,"\n") f:close() end
+end
+
+local function do_token()
+  while true do
+    clr() banner()
+    local t=tok()
+    print("  "..g("🔐 token","1;36"))
+    hline(40)
+    if t then
+      print("  status  "..g("set","1;32").."  "..g(t:sub(1,8).."…","2"))
+    else
+      print("  status  "..g("not set","1;33"))
+    end
+    print("")
+    print("  "..g("1","1;33").."  paste a token")
+    print("  "..g("2","1;33").."  check current token")
+    print("  "..g("3","1;33").."  remove saved token")
+    print("  "..g("4","1;33").."  what scopes should i use?")
+    print("  "..g("0","1;33").."  back")
+    print("")
+    local c=ask("  "..g("›","1;36").." ")
+    if c=="0" then return end
+    if c=="1" then
+      local v=ask("  token › ")
+      if v~="" then
+        local c2=load_cfg() c2.token=v save_cfg(c2)
+        print("  "..g("saved to config.lua","1;32")) slp(1)
+      end
+    elseif c=="2" then
+      local h=HEAD("https://api.github.com/user")
+      if not h then slp(1) else
+        local code
+        for l in h:gmatch"[^\r\n]+" do
+          code=l:match"^HTTP/%d%.%d%s+(%d+)" or code
+        end
+        if code=="401" then
+          print("  "..g("🚨 invalid token","1;31"))
+        else
+          local ol=h:match"\n[Oo]auth%-[Ss]copes:%s*([^\r\n]+)"
+                  or h:match"^[Oo]auth%-[Ss]copes:%s*([^\r\n]+)"
+          if not ol or ol=="" then
+            print("  "..g("scopes:","1;36").." none")
+            print("  "..g("✅ perfect","1;32"))
+          else
+            local any=false
+            for s in ol:gmatch"[^,%s]+" do
+              any=true
+              local danger=s=="repo" or s=="user" or s=="security_events"
+                or s=="delete_repo" or s=="admin:org" or s=="workflow"
+              print("  "..(danger and g("🚨","1;31") or g("✅","1;32")).."  "..s)
+            end
+            if not any then print("  "..g("✅ none","1;32")) end
+          end
+        end
+        ask("  [enter]")
+      end
+    elseif c=="3" then
+      local c2=load_cfg() c2.token=nil save_cfg(c2)
+      print("  "..g("removed","1;32")) slp(1)
+    elseif c=="4" then
+      clr() banner()
+      print("  "..g("recommended:","1;36"))
+      print("  "..g("✅ none","1;32").."  — classic token, zero boxes")
+      print("  "..g("🟢 public_repo","1;36").."  — if you insist")
+      print("")
+      print("  "..g("avoid:","1;31"))
+      for _,s in ipairs{"repo","user","security_events","delete_repo",
+                        "admin:org","workflow"} do
+        print("  "..g("🚨 "..s,"1;31"))
+      end
+      print("")
+      print("  "..g("https://github.com/settings/tokens","2"))
+      ask("  [enter]")
+    end
+  end
+end
+
+local function do_settings()
+  while true do
+    clr() banner()
+    local c=load_cfg()
+    print("  "..g("⚙ settings","1;36"))
+    hline(40)
+    print("  default limit   "..g(c.default_limit or FILT.limit,"1;33"))
+    print("  notifications   "..g(c.notify and "on" or "off","1;33"))
+    print("  auto-open top   "..g(c.auto_open and "on" or "off","1;33"))
+    print("  default lang    "..g(c.default_lang or "—","1;33"))
+    print("")
+    print("  "..g("1","1;33").."  default limit")
+    print("  "..g("2","1;33").."  toggle notifications")
+    print("  "..g("3","1;33").."  toggle auto-open top")
+    print("  "..g("4","1;33").."  default language")
+    print("  "..g("5","1;33").."  wipe seen cache")
+    print("  "..g("6","1;33").."  reset all settings")
+    print("  "..g("0","1;33").."  back")
+    print("")
+    local k=ask("  "..g("›","1;36").." ")
+    if k=="0" then return end
+    if k=="1" then
+      local v=tonumber(ask("  limit › "))
+      if v then c.default_limit=v save_cfg(c) FILT.limit=v end
+    elseif k=="2" then
+      c.notify=not c.notify save_cfg(c)
+    elseif k=="3" then
+      c.auto_open=not c.autif D.message and not D.items then return nil, D.message end
   return D
 end
 
