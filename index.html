@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>🐣 GHFIND — repo searcher</title>
+<title>◇ GHFIND — repo searcher</title>
 <meta name="description" content="GitHub repository search tool — pure Lua, single file.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐣</text></svg>">
 <meta property="og:title" content="◇ GHFIND">
@@ -381,6 +381,73 @@ function highlight(text, q) {
   return out;
 }
 
+// ═══════════════════════════════════════════════════════════════
+// markdown renderer
+// ═══════════════════════════════════════════════════════════════
+function md(src) {
+  if (!src) return '';
+  let s = src
+    .replace(/\r\n/g, '\n')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+
+  const blocks = [];
+  s = s.replace(/```(\w*)\n([\s\S]*?)```/g, (m, lang, code) => {
+    blocks.push('<pre class="md-code"><code>' + code + '</code></pre>');
+    return '\u0001' + (blocks.length - 1) + '\u0001';
+  });
+
+  s = s.replace(/`([^`\n]+)`/g, '<code class="md-inline">$1</code>');
+
+  s = s.replace(/!\[([^\]]*)\]\(([^)\s]+)[^)]*\)/g,
+    '<img class="md-img" src="$2" alt="$1" loading="lazy">');
+
+  s = s.replace(/\[([^\]]+)\]\(([^)\s]+)[^)]*\)/g,
+    '<a class="md-a" href="$2" target="_blank" rel="noopener">$1</a>');
+
+  s = s.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
+  s = s.replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>');
+  s = s.replace(/__([^_\n]+)__/g, '<strong>$1</strong>');
+  s = s.replace(/(^|[^_])_([^_\n]+)_/g, '$1<em>$2</em>');
+
+  s = s.replace(/^######\s+(.+)$/gm, '<h6>$1</h6>');
+  s = s.replace(/^#####\s+(.+)$/gm, '<h5>$1</h5>');
+  s = s.replace(/^####\s+(.+)$/gm, '<h4>$1</h4>');
+  s = s.replace(/^###\s+(.+)$/gm, '<h3>$1</h3>');
+  s = s.replace(/^##\s+(.+)$/gm, '<h2>$1</h2>');
+  s = s.replace(/^#\s+(.+)$/gm, '<h1>$1</h1>');
+
+  s = s.replace(/^[-*_]{3,}\s*$/gm, '<hr class="md-hr">');
+  s = s.replace(/^>\s?(.+)$/gm, '<blockquote class="md-quote">$1</blockquote>');
+
+  s = s.replace(/(<a class="md-a"[^>]*><img[^>]*><\/a>\s*){2,}/g,
+    m => '<div class="md-badges">' + m + '</div>');
+
+  s = s.replace(/^[-*]\s+\[x\]\s+(.+)$/gm, '<li class="md-task done">$1</li>');
+  s = s.replace(/^[-*]\s+\[\s\]\s+(.+)$/gm, '<li class="md-task">$1</li>');
+
+  s = s.replace(/(^[-*]\s+.+(\n[-*]\s+.+)*)/gm, m => {
+    const items = m.split('\n').map(l => l.replace(/^[-*]\s+/, ''));
+    return '<ul class="md-ul">' + items.map(i => '<li>' + i + '</li>').join('') + '</ul>';
+  });
+
+  s = s.replace(/(^\d+\.\s+.+(\n\d+\.\s+.+)*)/gm, m => {
+    const items = m.split('\n').map(l => l.replace(/^\d+\.\s+/, ''));
+    return '<ol class="md-ol">' + items.map(i => '<li>' + i + '</li>').join('') + '</ol>';
+  });
+
+  s = s.split('\n').map(line => {
+    if (!line.trim()) return '';
+    if (/^<(h\d|ul|ol|li|pre|blockquote|hr|div|p|img|table)/i.test(line)) return line;
+    if (/^\u0001\d+\u0001$/.test(line.trim())) return line;
+    return '<p class="md-p">' + line + '</p>';
+  }).join('\n');
+
+  s = s.replace(/\u0001(\d+)\u0001/g, (m, i) => blocks[+i]);
+  return s;
+}
+
 function card(r, i) {
   const c = document.createElement('article');
   c.className = 'card';
@@ -656,8 +723,12 @@ async function openRepoModal(r) {
   }
 
   const readmeEl = body.querySelector('#m-readme');
-  if (!readme) { readmeEl.innerHTML = '<div class="m-loading">// no readme</div>'; return; }
-  readmeEl.innerHTML = '<pre>' + esc(readme.slice(0, 3000)) + (readme.length > 3000 ? '\n\n… truncated' : '') + '</pre>';
+  if (!readme) {
+    readmeEl.innerHTML = '<div class="m-loading">// no readme</div>';
+    return;
+  }
+  readmeEl.innerHTML = '<div class="md">' + md(readme.slice(0, 12000)) +
+    (readme.length > 12000 ? '<p class="md-p"><em>… truncated</em></p>' : '') + '</div>';
 }
 
 function closeModal() {
@@ -946,8 +1017,7 @@ $('#help').addEventListener('click', () => {
       ['c', 'compare selected'],
       ['v', 'toggle view'],
       ['d', 'toggle density'],
-      ['?', 'this panel'],
-      ['0-9', 'quick filter']
+      ['?', 'this panel']
     ];
     box.innerHTML = rows.map(([k, v]) => `
       <div class="row-item">
