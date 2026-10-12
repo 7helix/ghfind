@@ -5,6 +5,7 @@ local C = (os.getenv("NO_COLOR")==nil)
 local HOME = os.getenv("HOME") or os.getenv("USERPROFILE") or "."
 local CFG = HOME..W..".config"..W.."ghfind"
 local ISWIN = (W == "\\")
+if ISWIN then os.execute("chcp 65001 >nul 2>nul") end
 
 local function g(s,k)
   if not C then return tostring(s) end
@@ -287,7 +288,8 @@ local function run(q)
         fn=fn,
         owner=owner,
         name=name,
-        url=grabstr(chunk,"html_url") or "",
+        url="https://github.com/"..fn,
+        clone="https://github.com/"..fn..".git",
         ds=grabstr(chunk,"description") or "",
         lg=grabstr(chunk,"language") or "-",
         st=grabnum(chunk,"stargazers_count"),
@@ -298,7 +300,6 @@ local function run(q)
         dt_created=(grabstr(chunk,"created_at") or ""):sub(1,10),
         dt_updated=(grabstr(chunk,"updated_at") or ""):sub(1,10),
         dt_pushed=(grabstr(chunk,"pushed_at") or ""):sub(1,10),
-        clone=grabstr(chunk,"clone_url") or "",
         homepage=grabstr(chunk,"homepage") or "",
         defbranch=grabstr(chunk,"default_branch") or "main",
         license=grabstr(chunk,"spdx_id") or "-",
