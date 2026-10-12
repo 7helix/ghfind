@@ -1,16 +1,18 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>◇ GHFIND</title>
-<meta name="description" content="GitHub repo searcher — pure Lua, single file.">
+<title>🐣 GHFIND — repo searcher</title>
+<meta name="description" content="GitHub repository search tool — pure Lua, single file.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐣</text></svg>">
 <meta property="og:title" content="◇ GHFIND">
+<meta property="og:description" content="github repo searcher — pure lua">
 <meta property="og:url" content="https://7helix.github.io/ghfind/">
+<meta name="twitter:card" content="summary">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Kanit:wght@700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Kanit:wght@600;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -18,16 +20,18 @@
 <div class="bg-grid"></div>
 
 <nav class="topbar">
-  <a class="nav-logo" href="#">
-    <span class="dia">◆</span> GHFIND
+  <a class="nav-logo" href="#top">
+    <span class="dia">◇</span>
+    <span>GHFIND</span>
   </a>
   <div class="nav-links">
-    <a class="active" href="#"><span class="dia-sm">◆</span> HOME</a>
-    <a href="#search"><span class="dia-sm">◆</span> SEARCH</a>
-    <a href="#" id="favs"><span class="dia-sm">◆</span> FAVS</a>
-    <a href="#" id="hist"><span class="dia-sm">◆</span> HISTORY</a>
-    <a href="#about"><span class="dia-sm">◆</span> ABOUT</a>
-    <a class="cta" href="https://github.com/7helix/ghfind" target="_blank"><span class="dia-sm">◆</span> GITHUB</a>
+    <a class="active" href="#top"><span class="dia-sm">◇</span> HOME</a>
+    <a href="#search"><span class="dia-sm">◇</span> SEARCH</a>
+    <a href="#" id="nav-favs"><span class="dia-sm">◇</span> FAVS<span class="badge" id="favc">0</span></a>
+    <a href="#" id="nav-hist"><span class="dia-sm">◇</span> HISTORY</a>
+    <a href="#" id="nav-presets"><span class="dia-sm">◇</span> PRESETS</a>
+    <a href="#" id="nav-settings"><span class="dia-sm">◇</span> SETTINGS</a>
+    <a class="cta" href="https://github.com/7helix/ghfind" target="_blank"><span class="dia-sm">◇</span> GITHUB</a>
   </div>
 </nav>
 
@@ -37,23 +41,18 @@
       <span class="signal-dot"></span>
       PUBLIC SIGNAL / ONLINE
     </div>
-
     <h1 class="hero-title">GHFIND</h1>
-
     <div class="hero-tag">github search · pure lua · single file</div>
-
     <p class="hero-desc">
-      A tiny command-line tool that scans GitHub's public network for
-      repositories matching your query. Reports stars, forks, language,
-      and last update. Runs in a single Lua file — no libraries, no build
-      step, no telemetry.
+      A command-line tool for searching GitHub repositories. Filters by
+      language, stars, and date. Saves presets, tracks favorites, watches
+      for new results, and audits token permissions. Ships as one Lua file
+      with no dependencies beyond curl.
     </p>
-
     <div class="hero-actions">
-      <a class="btn-green" href="https://raw.githubusercontent.com/7helix/ghfind/main/ghfind.lua" target="_blank">READ THE SOURCE</a>
-      <button class="btn-outline" id="scroll-search">ENTER SEARCH</button>
+      <a class="btn-green" href="https://raw.githubusercontent.com/7helix/ghfind/main/ghfind.lua" target="_blank">DOWNLOAD</a>
+      <button class="btn-outline" id="scroll-search">SEARCH NOW</button>
     </div>
-
     <div class="info-boxes">
       <div class="info-box">
         <div class="k">NODE</div>
@@ -72,10 +71,10 @@
 
   <div class="hero-right">
     <svg class="orbit" viewBox="0 0 500 500" aria-hidden="true">
-      <circle cx="250" cy="250" r="80" />
-      <circle cx="250" cy="250" r="160" stroke-dasharray="4 8" />
-      <circle cx="250" cy="250" r="230" stroke-dasharray="2 10" />
-      <polygon points="250,40 460,250 250,460 40,250" fill="none" />
+      <circle cx="250" cy="250" r="80"/>
+      <circle cx="250" cy="250" r="160" stroke-dasharray="4 8"/>
+      <circle cx="250" cy="250" r="230" stroke-dasharray="2 10"/>
+      <polygon points="250,40 460,250 250,460 40,250" fill="none"/>
     </svg>
     <div class="mascot">
       <div class="mascot-glow"></div>
@@ -149,10 +148,23 @@
       <button class="chip" data-v="365">1y</button>
       <button class="chip" data-v="1095">3y</button>
     </div>
+    <div class="chips" id="size">
+      <span class="lbl">⌘</span>
+      <button class="chip on" data-v="">any</button>
+      <button class="chip" data-v="small">&lt;1MB</button>
+      <button class="chip" data-v="medium">1-50MB</button>
+      <button class="chip" data-v="large">&gt;50MB</button>
+    </div>
+  </div>
+
+  <div class="filters">
     <div class="chips right">
-      <button class="chip" id="random">random</button>
-      <button class="chip" id="trend">trending</button>
-      <button class="chip" id="view">grid</button>
+      <button class="chip" id="random">⚄ random</button>
+      <button class="chip" id="trend">▴ trending</button>
+      <button class="chip" id="watch">◉ watch</button>
+      <button class="chip" id="compare">⊕ compare</button>
+      <button class="chip" id="view">▦ grid</button>
+      <button class="chip" id="density">⊞ comfortable</button>
       <button class="chip" id="theme">◐</button>
       <button class="chip" id="help">?</button>
     </div>
@@ -166,6 +178,10 @@
     <button class="tag" data-q="markdown parser">markdown parser</button>
     <button class="tag" data-q="terminal game">terminal game</button>
     <button class="tag" data-q="lua binding">lua binding</button>
+    <button class="tag" data-q="dotfiles">dotfiles</button>
+    <button class="tag" data-q="cli tool">cli tool</button>
+    <button class="tag" data-q="static site generator">static site</button>
+    <button class="tag" data-q="json parser">json parser</button>
   </div>
 
   <p id="status" class="status"></p>
@@ -177,38 +193,12 @@
   </div>
 </section>
 
-<section class="presets" id="about">
-  <div class="section-head">
-    <span class="dia">◆</span>
-    <h2>SAVED SIGNALS</h2>
-    <span class="line"></span>
-    <span class="dim">presets</span>
-  </div>
-  <div class="preset-row" id="preset-row"></div>
-  <div class="preset-add">
-    <input id="preset-name" placeholder="name" maxlength="20">
-    <input id="preset-q" placeholder="query" maxlength="80">
-    <button id="preset-save">SAVE</button>
-  </div>
-</section>
-
-<section class="install">
-  <div class="section-head">
-    <span class="dia">◆</span>
-    <h2>INSTALL THE CLI</h2>
-    <span class="line"></span>
-    <span class="dim">lua + curl</span>
-  </div>
-  <pre><code><span class="c-cy">$</span> curl -O https://raw.githubusercontent.com/7helix/ghfind/main/ghfind.lua
-<span class="c-cy">$</span> chmod +x ghfind.lua
-<span class="c-cy">$</span> lua ghfind.lua "neovim colorscheme" --sort stars</code></pre>
-</section>
-
 <div class="drawer" id="drawer" hidden>
   <div class="drawer-back" id="drawer-back"></div>
   <div class="drawer-panel">
     <div class="drawer-head">
       <h3 id="drawer-title">favorites</h3>
+      <div class="drawer-actions" id="drawer-actions"></div>
       <button class="icon-btn" id="drawer-close">✕</button>
     </div>
     <div class="drawer-body" id="drawer-body"></div>
@@ -220,6 +210,14 @@
   <div class="modal-panel">
     <button class="icon-btn modal-close" id="modal-close">✕</button>
     <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+<div class="modal" id="modal2" hidden>
+  <div class="modal-back" id="modal2-back"></div>
+  <div class="modal-panel">
+    <button class="icon-btn modal-close" id="modal2-close">✕</button>
+    <div class="modal-body" id="modal2-body"></div>
   </div>
 </div>
 
@@ -238,6 +236,9 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({
 const fmt = n => n >= 1e6 ? (n/1e6).toFixed(1)+'M'
               : n >= 1e3 ? (n/1e3).toFixed(1)+'k'
               : String(n|0);
+const fmtSize = kb => kb >= 1024*1024 ? (kb/1024/1024).toFixed(1)+'GB'
+                   : kb >= 1024 ? (kb/1024).toFixed(1)+'MB'
+                   : kb + 'KB';
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const ago = d => {
   const s = (Date.now() - new Date(d)) / 1000;
@@ -247,25 +248,36 @@ const ago = d => {
   if (s < 31536000) return Math.floor(s/2592000)+'mo';
   return Math.floor(s/31536000)+'y';
 };
+
 const LANG_COLORS = {
   'Lua':'#00e5ff','Python':'#a8f04a','Rust':'#ff5c3d','Go':'#00d4ff',
   'JavaScript':'#f7df1e','TypeScript':'#00a8ff','C':'#7a7a7a','C++':'#ff2e97',
-  'Zig':'#ff9d00','Java':'#ff7a3d','Ruby':'#ff2e63','Haskell':'#b47aff'
+  'Zig':'#ff9d00','Java':'#ff7a3d','Ruby':'#ff2e63','Haskell':'#b47aff',
+  'Shell':'#4ade80','Vim script':'#7dff4d','Nix':'#7dc4ff'
 };
 const langColor = l => LANG_COLORS[l] || '#00e5ff';
 
 const LS = {
   get(k, d) { try { return JSON.parse(localStorage.getItem('ghf_'+k)) ?? d } catch { return d } },
-  set(k, v) { try { localStorage.setItem('ghf_'+k, JSON.stringify(v)) } catch {} }
+  set(k, v) { try { localStorage.setItem('ghf_'+k, JSON.stringify(v)) } catch {} },
+  del(k) { try { localStorage.removeItem('ghf_'+k) } catch {} }
 };
 
 const state = {
-  lang: '', sort: '', stars: '', age: '',
+  lang: '', sort: '', stars: '', age: '', size: '',
   page: 1, per: 12, total: 0, q: '',
-  busy: false, demo: true, view: LS.get('view', 'grid'),
+  busy: false, demo: true,
+  view: LS.get('view', 'grid'),
+  density: LS.get('density', 'comfortable'),
   token: sessionStorage.getItem('ghf_tok') || '',
   favs: LS.get('favs', []),
-  hist: LS.get('hist', [])
+  hist: LS.get('hist', []),
+  presets: LS.get('presets', []),
+  notes: LS.get('notes', {}),
+  seen: LS.get('seen', {}),
+  watchTimer: null,
+  watchQuery: '',
+  compare: []
 };
 
 const savedTheme = LS.get('theme', null);
@@ -280,6 +292,11 @@ async function ghSearch(q, page = 1) {
     d.setDate(d.getDate() - +state.age);
     query += ' pushed:>' + d.toISOString().slice(0,10);
   }
+  if (state.size) {
+    if (state.size === 'small') query += ' size:<1000';
+    else if (state.size === 'medium') query += ' size:1000..50000';
+    else if (state.size === 'large') query += ' size:>50000';
+  }
   const p = new URLSearchParams({ q: query, per_page: state.per, page });
   if (state.sort) { p.set('sort', state.sort); p.set('order', 'desc'); }
   const h = { Accept: 'application/vnd.github+json' };
@@ -290,9 +307,42 @@ async function ghSearch(q, page = 1) {
   return j;
 }
 
+async function ghRepo(full) {
+  const h = { Accept: 'application/vnd.github+json' };
+  if (state.token) h.Authorization = 'Bearer ' + state.token;
+  const r = await fetch('https://api.github.com/repos/' + full, { headers: h });
+  if (!r.ok) return null;
+  return r.json();
+}
+
+async function ghReadme(full) {
+  const h = { Accept: 'application/vnd.github.raw' };
+  if (state.token) h.Authorization = 'Bearer ' + state.token;
+  const r = await fetch('https://api.github.com/repos/' + full + '/readme', { headers: h });
+  if (!r.ok) return '';
+  return r.text();
+}
+
+async function ghReleases(full) {
+  const h = { Accept: 'application/vnd.github+json' };
+  if (state.token) h.Authorization = 'Bearer ' + state.token;
+  const r = await fetch('https://api.github.com/repos/' + full + '/releases?per_page=3', { headers: h });
+  if (!r.ok) return [];
+  return r.json();
+}
+
+async function ghContributors(full) {
+  const h = { Accept: 'application/vnd.github+json' };
+  if (state.token) h.Authorization = 'Bearer ' + state.token;
+  const r = await fetch('https://api.github.com/repos/' + full + '/contributors?per_page=5', { headers: h });
+  if (!r.ok) return [];
+  return r.json();
+}
+
 function pushHist(q) {
-  state.hist = [q, ...state.hist.filter(x => x !== q)].slice(0, 30);
+  state.hist = [q, ...state.hist.filter(x => x !== q)].slice(0, 50);
   LS.set('hist', state.hist);
+  $('#favc').textContent = state.favs.length;
 }
 
 function isFav(fn) { return state.favs.some(f => f.full_name === fn); }
@@ -304,10 +354,11 @@ function toggleFav(r) {
     full_name: r.full_name, html_url: r.html_url,
     description: r.description, stars: r.stargazers_count,
     forks: r.forks_count, language: r.language,
-    owner: r.owner?.avatar_url
+    owner: r.owner?.avatar_url, added: Date.now()
   });
-  state.favs = state.favs.slice(0, 100);
+  state.favs = state.favs.slice(0, 200);
   LS.set('favs', state.favs);
+  $('#favc').textContent = state.favs.length;
 }
 
 let toastT;
@@ -316,31 +367,49 @@ function toast(msg) {
   t.textContent = msg;
   t.classList.add('on');
   clearTimeout(toastT);
-  toastT = setTimeout(() => t.classList.remove('on'), 1600);
+  toastT = setTimeout(() => t.classList.remove('on'), 1800);
+}
+
+function highlight(text, q) {
+  if (!q) return esc(text);
+  const words = q.split(/\s+/).filter(w => w.length > 1);
+  let out = esc(text);
+  words.forEach(w => {
+    const re = new RegExp('(' + w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+    out = out.replace(re, '<mark>$1</mark>');
+  });
+  return out;
 }
 
 function card(r, i) {
   const c = document.createElement('article');
   c.className = 'card';
+  c.dataset.fn = r.full_name;
   c.style.animationDelay = (i * 30) + 'ms';
   const fav = isFav(r.full_name);
+  const inCompare = state.compare.includes(r.full_name);
+  const note = state.notes[r.full_name] || '';
   c.innerHTML = `
     <div class="card-head">
       <img class="avatar" src="${esc(r.owner?.avatar_url || '')}" alt="" loading="lazy">
-      <a class="repo" href="${esc(r.html_url)}" target="_blank" rel="noopener">${esc(r.full_name)}</a>
-      <button class="fav ${fav?'on':''}">${fav?'★':'☆'}</button>
+      <a class="repo" href="${esc(r.html_url)}" target="_blank" rel="noopener">${highlight(r.full_name, state.q)}</a>
+      <button class="fav ${fav?'on':''}" title="favorite">${fav?'★':'☆'}</button>
+      <button class="cmp ${inCompare?'on':''}" title="compare">⊕</button>
     </div>
-    <p class="desc">${esc(r.description || '—')}</p>
+    <p class="desc">${highlight(r.description || '—', state.q)}</p>
     ${r.topics && r.topics.length ? `<div class="topics">${r.topics.slice(0,4).map(t => `<span class="topic">#${esc(t)}</span>`).join('')}</div>` : ''}
+    ${note ? `<div class="note">📝 ${esc(note)}</div>` : ''}
     <div class="card-foot">
       ${r.language ? `<span class="pill" style="--lc:${langColor(r.language)}">${esc(r.language)}</span>` : ''}
       <span class="metric">★ ${fmt(r.stargazers_count)}</span>
       <span class="metric">⌥ ${fmt(r.forks_count)}</span>
+      <span class="metric">! ${fmt(r.open_issues_count)}</span>
       <span class="metric dim">◷ ${ago(r.updated_at)}</span>
     </div>
     <div class="card-actions">
       <a class="act" href="${esc(r.html_url)}" target="_blank" rel="noopener">OPEN ↗</a>
       <button class="act copy">COPY</button>
+      <button class="act clone">CLONE</button>
       <button class="act details">INFO</button>
     </div>`;
   c.querySelector('.fav').addEventListener('click', e => {
@@ -350,13 +419,33 @@ function card(r, i) {
     e.target.textContent = e.target.classList.contains('on') ? '★' : '☆';
     toast(isFav(r.full_name) ? '★ saved' : 'removed');
   });
+  c.querySelector('.cmp').addEventListener('click', e => {
+    e.preventDefault();
+    const i = state.compare.indexOf(r.full_name);
+    if (i >= 0) state.compare.splice(i, 1);
+    else state.compare.push(r.full_name);
+    e.target.classList.toggle('on');
+    toast(state.compare.length + ' selected');
+  });
   c.querySelector('.copy').addEventListener('click', async e => {
     e.preventDefault();
     await navigator.clipboard.writeText(r.html_url);
-    toast('copied');
+    toast('url copied');
   });
-  c.querySelector('.details').addEventListener('click', e => { e.preventDefault(); openRepoModal(r); });
-  c.querySelector('.repo').addEventListener('click', e => { e.preventDefault(); openRepoModal(r); });
+  c.querySelector('.clone').addEventListener('click', async e => {
+    e.preventDefault();
+    const url = r.clone_url || r.html_url + '.git';
+    await navigator.clipboard.writeText('git clone ' + url);
+    toast('clone cmd copied');
+  });
+  c.querySelector('.details').addEventListener('click', e => {
+    e.preventDefault();
+    openRepoModal(r);
+  });
+  c.querySelector('.repo').addEventListener('click', e => {
+    e.preventDefault();
+    openRepoModal(r);
+  });
   return c;
 }
 
@@ -414,6 +503,9 @@ async function run(q, page = 1) {
     render(d.items || [], page > 1);
     $('#more').hidden = (d.items||[]).length < state.per || page * state.per >= Math.min(state.total, 1000);
     if (page === 1) pushHist(q.trim());
+    const url = new URL(location);
+    url.searchParams.set('q', q.trim());
+    history.replaceState(null, '', url);
   } catch (e) {
     $('#status').innerHTML = '<span class="err-mark">[ err ]</span> ' + esc(e.message);
   } finally {
@@ -426,7 +518,7 @@ async function typeInto(inp, text) {
   for (const ch of text) {
     if (!state.demo) return;
     inp.value += ch;
-    await sleep(40 + Math.random() * 30);
+    await sleep(35 + Math.random() * 30);
   }
 }
 
@@ -438,7 +530,7 @@ const DEMOS = [
 ];
 
 async function demoLoop() {
-  await sleep(1000);
+  await sleep(900);
   while (state.demo) {
     for (const d of DEMOS) {
       if (!state.demo) return;
@@ -451,7 +543,7 @@ async function demoLoop() {
       await sleep(220);
       await run(d.q);
       if (!state.demo) return;
-      await sleep(3400);
+      await sleep(3200);
     }
   }
 }
@@ -465,9 +557,11 @@ function setChip(sel, val) {
   $$(sel + ' .chip').forEach(c => c.classList.toggle('on', c.dataset.v === val));
 }
 
-function openDrawer(title, bodyFn) {
+function openDrawer(title, bodyFn, actions) {
   $('#drawer-title').textContent = title;
   $('#drawer-body').innerHTML = '';
+  $('#drawer-actions').innerHTML = '';
+  if (actions) actions($('#drawer-actions'));
   bodyFn($('#drawer-body'));
   $('#drawer').hidden = false;
   requestAnimationFrame(() => $('#drawer').classList.add('on'));
@@ -491,19 +585,24 @@ async function openRepoModal(r) {
       </div>
     </div>
     <div class="m-stats">
-      <div class="m-stat"><div class="v">${fmt(r.stargazers_count)}</div><div class="l">★ stars</div></div>
-      <div class="m-stat"><div class="v">${fmt(r.forks_count)}</div><div class="l">⌥ forks</div></div>
-      <div class="m-stat"><div class="v">${fmt(r.open_issues_count)}</div><div class="l">! issues</div></div>
-      <div class="m-stat"><div class="v">${fmt(r.watchers_count)}</div><div class="l">◉ watch</div></div>
+      <div class="m-stat"><div class="v">${fmt(r.stargazers_count)}</div><div class="l">stars</div></div>
+      <div class="m-stat"><div class="v">${fmt(r.forks_count)}</div><div class="l">forks</div></div>
+      <div class="m-stat"><div class="v">${fmt(r.open_issues_count)}</div><div class="l">issues</div></div>
+      <div class="m-stat"><div class="v">${fmt(r.watchers_count)}</div><div class="l">watchers</div></div>
+      <div class="m-stat"><div class="v">${fmtSize(r.size)}</div><div class="l">size</div></div>
       <div class="m-stat"><div class="v">${r.license?.spdx_id || '—'}</div><div class="l">license</div></div>
     </div>
     ${r.topics && r.topics.length ? `<div class="m-topics">${r.topics.map(t => `<a class="m-topic" href="https://github.com/topics/${esc(t)}" target="_blank" rel="noopener">#${esc(t)}</a>`).join('')}</div>` : ''}
+    <div id="m-extra"></div>
     <div id="m-readme" class="m-readme"><div class="m-loading">// loading readme…</div></div>
     <div class="m-actions">
       <a class="m-btn primary" href="${esc(r.html_url)}" target="_blank" rel="noopener">OPEN ↗</a>
       <button class="m-btn" id="m-fav">${isFav(r.full_name) ? '★ UNFAV' : '☆ FAV'}</button>
       <button class="m-btn" id="m-copy">COPY URL</button>
       <button class="m-btn" id="m-clone">COPY CLONE</button>
+      <button class="m-btn" id="m-note">NOTE</button>
+      <a class="m-btn" href="${esc(r.html_url)}/issues" target="_blank" rel="noopener">ISSUES</a>
+      <a class="m-btn" href="${esc(r.html_url)}/releases" target="_blank" rel="noopener">RELEASES</a>
     </div>`;
   m.hidden = false;
   requestAnimationFrame(() => m.classList.add('on'));
@@ -515,24 +614,50 @@ async function openRepoModal(r) {
     toast(on ? '★ saved' : 'removed');
   });
   body.querySelector('#m-copy').addEventListener('click', async () => {
-    await navigator.clipboard.writeText(r.html_url); toast('url copied');
+    await navigator.clipboard.writeText(r.html_url);
+    toast('url copied');
   });
   body.querySelector('#m-clone').addEventListener('click', async () => {
     await navigator.clipboard.writeText('git clone ' + (r.clone_url || r.html_url + '.git'));
-    toast('clone cmd copied');
+    toast('clone copied');
+  });
+  body.querySelector('#m-note').addEventListener('click', () => {
+    const cur = state.notes[r.full_name] || '';
+    const note = prompt('note for ' + r.full_name, cur);
+    if (note !== null) {
+      if (note.trim()) state.notes[r.full_name] = note.trim();
+      else delete state.notes[r.full_name];
+      LS.set('notes', state.notes);
+      toast('note saved');
+    }
   });
 
-  try {
-    const r2 = await fetch(`https://api.github.com/repos/${r.full_name}/readme`, {
-      headers: { Accept: 'application/vnd.github.raw' }
-    });
-    const txt = r2.ok ? await r2.text() : '';
-    const el = body.querySelector('#m-readme');
-    if (!txt) { el.innerHTML = '<div class="m-loading">// no readme</div>'; return; }
-    el.innerHTML = '<pre>' + esc(txt.slice(0, 2000)) + (txt.length > 2000 ? '\n\n… truncated' : '') + '</pre>';
-  } catch {
-    body.querySelector('#m-readme').innerHTML = '<div class="m-loading">// readme unavailable</div>';
+  const [readme, releases, contributors] = await Promise.all([
+    ghReadme(r.full_name),
+    ghReleases(r.full_name),
+    ghContributors(r.full_name)
+  ]);
+
+  const extra = body.querySelector('#m-extra');
+  if (releases.length) {
+    extra.innerHTML += `<div class="m-section"><div class="m-section-title">// latest releases</div>${releases.map(rel => `
+      <a class="m-release" href="${esc(rel.html_url)}" target="_blank" rel="noopener">
+        <span class="m-rel-tag">${esc(rel.tag_name)}</span>
+        <span class="m-rel-name">${esc(rel.name || '')}</span>
+        <span class="m-rel-date">${ago(rel.published_at)}</span>
+      </a>`).join('')}</div>`;
   }
+  if (contributors.length) {
+    extra.innerHTML += `<div class="m-section"><div class="m-section-title">// contributors</div><div class="m-contrib">${contributors.map(c => `
+      <a class="m-contrib-item" href="${esc(c.html_url)}" target="_blank" rel="noopener" title="${esc(c.login)}">
+        <img src="${esc(c.avatar_url)}" alt="">
+        <span>${esc(c.login)}</span>
+      </a>`).join('')}</div></div>`;
+  }
+
+  const readmeEl = body.querySelector('#m-readme');
+  if (!readme) { readmeEl.innerHTML = '<div class="m-loading">// no readme</div>'; return; }
+  readmeEl.innerHTML = '<pre>' + esc(readme.slice(0, 3000)) + (readme.length > 3000 ? '\n\n… truncated' : '') + '</pre>';
 }
 
 function closeModal() {
@@ -540,96 +665,297 @@ function closeModal() {
   m.classList.remove('on');
   setTimeout(() => m.hidden = true, 200);
 }
-
-function getPresets() { return LS.get('presets', []) }
-function savePresets(p) { LS.set('presets', p); drawPresets() }
-
-function drawPresets() {
-  const row = $('#preset-row');
-  const list = getPresets();
-  row.innerHTML = '';
-  if (!list.length) {
-    row.innerHTML = '<span class="dim" style="font-size:.82rem">// no presets yet</span>';
-    return;
-  }
-  list.forEach((p, i) => {
-    const el = document.createElement('button');
-    el.className = 'preset';
-    el.innerHTML = `<span class="dia">◆</span>${esc(p.name)}<span class="x" data-i="${i}">✕</span>`;
-    el.addEventListener('click', e => {
-      if (e.target.classList.contains('x')) {
-        e.stopPropagation();
-        const l = getPresets(); l.splice(i, 1); savePresets(l); return;
-      }
-      stopDemo();
-      $('#q').value = p.q || '';
-      state.lang = p.lang || ''; setChip('#langs', state.lang);
-      state.sort = p.sort || ''; setChip('#sorts', state.sort);
-      state.stars = p.stars || ''; setChip('#stars', state.stars);
-      state.age = p.age || ''; setChip('#age', state.age);
-      if (p.q) run(p.q);
-    });
-    row.appendChild(el);
-  });
+function closeModal2() {
+  const m = $('#modal2');
+  m.classList.remove('on');
+  setTimeout(() => m.hidden = true, 200);
 }
 
-$('#preset-save').addEventListener('click', () => {
-  const name = $('#preset-name').value.trim();
-  const q = $('#preset-q').value.trim() || state.q;
-  if (!name) return toast('name it first');
-  const list = getPresets().filter(x => x.name !== name);
-  list.push({ name, q, lang: state.lang, sort: state.sort, stars: state.stars, age: state.age });
-  savePresets(list);
-  $('#preset-name').value = '';
-  $('#preset-q').value = '';
-  toast('saved');
-});
+function exportData(type, data, filename) {
+  let blob;
+  if (type === 'json') {
+    blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  } else if (type === 'csv') {
+    const rows = [['name','url','stars','forks','language','updated']];
+    data.forEach(r => rows.push([r.full_name, r.html_url, r.stargazers_count, r.forks_count, r.language || '', (r.updated_at||'').slice(0,10)]));
+    blob = new Blob([rows.map(r => r.map(v => '"' + String(v).replace(/"/g,'""') + '"').join(',')).join('\n')], { type: 'text/csv' });
+  } else {
+    blob = new Blob([data.map(r => r.full_name + '\t' + r.html_url).join('\n')], { type: 'text/plain' });
+  }
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+}
 
-$('#favs').addEventListener('click', e => {
+$('#nav-favs').addEventListener('click', e => {
   e.preventDefault();
-  openDrawer('★ favorites [' + state.favs.length + ']', box => {
-    if (!state.favs.length) {
-      box.innerHTML = '<p class="empty">// no favorites yet</p>';
-      return;
-    }
-    state.favs.forEach(f => {
-      const el = document.createElement('a');
-      el.className = 'row-item';
-      el.href = f.html_url;
-      el.target = '_blank';
-      el.innerHTML = `
-        <img src="${esc(f.owner||'')}" alt="" class="av">
-        <div class="row-txt">
-          <div class="row-title">${esc(f.full_name)}</div>
-          <div class="row-sub">${esc(f.description||'')}</div>
-        </div>
-        <span class="row-met">★ ${fmt(f.stars)}</span>`;
-      box.appendChild(el);
+  openDrawer('★ FAVORITES [' + state.favs.length + ']', box => {
+    if (!state.favs.length) { box.innerHTML = '<p class="empty">// empty</p>'; return; }
+    state.favs.forEach((f, i) => {
+      const wrap = document.createElement('div');
+      wrap.className = 'row-item-col';
+      wrap.innerHTML = `
+        <a class="row-item" href="${esc(f.html_url)}" target="_blank" rel="noopener">
+          <img src="${esc(f.owner||'')}" alt="" class="av">
+          <div class="row-txt">
+            <div class="row-title">${esc(f.full_name)}</div>
+            <div class="row-sub">${esc(f.description||'')}</div>
+          </div>
+          <span class="row-met">★ ${fmt(f.stars)}</span>
+        </a>
+        <textarea class="fav-note" placeholder="// note" data-fn="${esc(f.full_name)}">${esc(state.notes[f.full_name] || '')}</textarea>
+        <div class="row-tools">
+          <button class="danger" data-rm="${esc(f.full_name)}">REMOVE</button>
+          <button data-copy="${esc(f.full_name)}">COPY URL</button>
+        </div>`;
+      wrap.querySelector('.fav-note').addEventListener('input', ev => {
+        const fn = ev.target.dataset.fn;
+        if (ev.target.value.trim()) state.notes[fn] = ev.target.value.trim();
+        else delete state.notes[fn];
+        LS.set('notes', state.notes);
+      });
+      wrap.querySelector('[data-rm]').addEventListener('click', ev => {
+        const fn = ev.target.dataset.rm;
+        state.favs = state.favs.filter(x => x.full_name !== fn);
+        LS.set('favs', state.favs);
+        $('#favc').textContent = state.favs.length;
+        closeDrawer();
+      });
+      wrap.querySelector('[data-copy]').addEventListener('click', ev => {
+        const fv = state.favs.find(x => x.full_name === ev.target.dataset.copy);
+        if (fv) { navigator.clipboard.writeText(fv.html_url); toast('copied'); }
+      });
+      box.appendChild(wrap);
+    });
+  }, act => {
+    act.innerHTML = `
+      <button class="icon-btn" id="fav-export">EXPORT</button>
+      <button class="icon-btn danger" id="fav-clear">CLEAR</button>`;
+    act.querySelector('#fav-export').addEventListener('click', () => {
+      exportData('json', state.favs, 'ghfind-favorites.json');
+    });
+    act.querySelector('#fav-clear').addEventListener('click', () => {
+      if (!confirm('clear all favorites?')) return;
+      state.favs = [];
+      LS.set('favs', []);
+      $('#favc').textContent = 0;
+      closeDrawer();
     });
   });
 });
 
-$('#hist').addEventListener('click', e => {
+$('#nav-hist').addEventListener('click', e => {
   e.preventDefault();
-  openDrawer('▤ history', box => {
+  openDrawer('▤ HISTORY [' + state.hist.length + ']', box => {
     if (!state.hist.length) { box.innerHTML = '<p class="empty">// empty</p>'; return; }
     state.hist.forEach(h => {
       const el = document.createElement('button');
       el.className = 'row-item btn-row';
-      el.innerHTML = `<div class="row-txt"><div class="row-title"><span class="dia">◆</span> ${esc(h)}</div></div>`;
-      el.addEventListener('click', () => { $('#q').value = h; closeDrawer(); stopDemo(); run(h); });
+      el.innerHTML = `<div class="row-txt"><div class="row-title"><span class="dia">◇</span> ${esc(h)}</div></div>`;
+      el.addEventListener('click', () => {
+        $('#q').value = h;
+        closeDrawer();
+        stopDemo();
+        run(h);
+      });
       box.appendChild(el);
+    });
+  }, act => {
+    act.innerHTML = `<button class="icon-btn danger" id="hist-clear">CLEAR</button>`;
+    act.querySelector('#hist-clear').addEventListener('click', () => {
+      if (!confirm('clear history?')) return;
+      state.hist = [];
+      LS.set('hist', []);
+      closeDrawer();
+    });
+  });
+});
+
+$('#nav-presets').addEventListener('click', e => {
+  e.preventDefault();
+  openDrawer('◆ PRESETS [' + state.presets.length + ']', box => {
+    if (!state.presets.length) {
+      box.innerHTML = '<p class="empty">// no presets yet — run a search and press SAVE PRESET</p>';
+      return;
+    }
+    state.presets.forEach((p, i) => {
+      const el = document.createElement('div');
+      el.className = 'row-item-col';
+      el.innerHTML = `
+        <button class="row-item btn-row" data-run="${i}">
+          <div class="row-txt">
+            <div class="row-title"><span class="dia">◆</span> ${esc(p.name)}</div>
+            <div class="row-sub">${esc(p.q)}${p.lang ? ' · '+esc(p.lang) : ''}${p.sort ? ' · '+esc(p.sort) : ''}</div>
+          </div>
+        </button>
+        <div class="row-tools">
+          <button data-del="${i}" class="danger">DELETE</button>
+        </div>`;
+      el.querySelector('[data-run]').addEventListener('click', () => {
+        $('#q').value = p.q;
+        state.lang = p.lang || '';
+        state.sort = p.sort || '';
+        state.stars = p.stars || '';
+        state.age = p.age || '';
+        state.size = p.size || '';
+        setChip('#langs', state.lang);
+        setChip('#sorts', state.sort);
+        setChip('#stars', state.stars);
+        setChip('#age', state.age);
+        setChip('#size', state.size);
+        closeDrawer();
+        stopDemo();
+        run(p.q);
+      });
+      el.querySelector('[data-del]').addEventListener('click', () => {
+        state.presets.splice(i, 1);
+        LS.set('presets', state.presets);
+        closeDrawer();
+      });
+      box.appendChild(el);
+    });
+  });
+});
+
+$('#nav-settings').addEventListener('click', e => {
+  e.preventDefault();
+  openDrawer('⚙ SETTINGS', box => {
+    const tok = state.token ? state.token.slice(0,8) + '…' : 'not set';
+    box.innerHTML = `
+      <div class="setting-row">
+        <div>
+          <div class="setting-k">GITHUB TOKEN</div>
+          <div class="setting-v">${esc(tok)}</div>
+        </div>
+        <button class="icon-btn" id="set-tok">${state.token ? 'CHANGE' : 'ADD'}</button>
+      </div>
+      <div class="setting-row">
+        <div>
+          <div class="setting-k">THEME</div>
+          <div class="setting-v">${document.documentElement.dataset.theme || 'dark'}</div>
+        </div>
+        <button class="icon-btn" id="set-theme">TOGGLE</button>
+      </div>
+      <div class="setting-row">
+        <div>
+          <div class="setting-k">VIEW</div>
+          <div class="setting-v">${state.view}</div>
+        </div>
+        <button class="icon-btn" id="set-view">TOGGLE</button>
+      </div>
+      <div class="setting-row">
+        <div>
+          <div class="setting-k">DENSITY</div>
+          <div class="setting-v">${state.density}</div>
+        </div>
+        <button class="icon-btn" id="set-density">TOGGLE</button>
+      </div>
+      <div class="setting-row">
+        <div>
+          <div class="setting-k">SEEN CACHE</div>
+          <div class="setting-v">${Object.keys(state.seen).length} queries</div>
+        </div>
+        <button class="icon-btn danger" id="set-clear-seen">CLEAR</button>
+      </div>
+      <div class="setting-row">
+        <div>
+          <div class="setting-k">ALL DATA</div>
+          <div class="setting-v">favorites, history, presets, notes</div>
+        </div>
+        <button class="icon-btn danger" id="set-reset">RESET</button>
+      </div>
+      <div class="setting-row">
+        <div>
+          <div class="setting-k">EXPORT ALL</div>
+          <div class="setting-v">download a json backup</div>
+        </div>
+        <button class="icon-btn" id="set-export">EXPORT</button>
+      </div>`;
+    box.querySelector('#set-tok').addEventListener('click', () => {
+      const t = prompt('paste token (leave blank to remove)', state.token ? '••••••••' : '');
+      if (t === null) return;
+      if (t === '' || t.match(/^•+$/)) {
+        state.token = '';
+        sessionStorage.removeItem('ghf_tok');
+        toast('token removed');
+      } else {
+        state.token = t.trim();
+        sessionStorage.setItem('ghf_tok', state.token);
+        toast('token saved');
+      }
+      closeDrawer();
+    });
+    box.querySelector('#set-theme').addEventListener('click', () => {
+      const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+      document.documentElement.dataset.theme = next;
+      LS.set('theme', next);
+      closeDrawer();
+    });
+    box.querySelector('#set-view').addEventListener('click', () => {
+      state.view = state.view === 'grid' ? 'list' : 'grid';
+      LS.set('view', state.view);
+      $('#grid').classList.toggle('list', state.view === 'list');
+      closeDrawer();
+    });
+    box.querySelector('#set-density').addEventListener('click', () => {
+      state.density = state.density === 'comfortable' ? 'compact' : 'comfortable';
+      LS.set('density', state.density);
+      document.body.classList.toggle('compact', state.density === 'compact');
+      closeDrawer();
+    });
+    box.querySelector('#set-clear-seen').addEventListener('click', () => {
+      state.seen = {};
+      LS.set('seen', {});
+      toast('seen cache cleared');
+      closeDrawer();
+    });
+    box.querySelector('#set-reset').addEventListener('click', () => {
+      if (!confirm('reset everything?')) return;
+      LS.del('favs'); LS.del('hist'); LS.del('presets'); LS.del('notes'); LS.del('seen');
+      state.favs = []; state.hist = []; state.presets = []; state.notes = {}; state.seen = {};
+      $('#favc').textContent = 0;
+      toast('reset done');
+      closeDrawer();
+    });
+    box.querySelector('#set-export').addEventListener('click', () => {
+      exportData('json', {
+        favorites: state.favs,
+        history: state.hist,
+        presets: state.presets,
+        notes: state.notes,
+        exported: new Date().toISOString()
+      }, 'ghfind-backup.json');
+      toast('exported');
     });
   });
 });
 
 $('#help').addEventListener('click', () => {
-  openDrawer('? shortcuts', box => {
-    box.innerHTML = `
-      <div class="row-item"><div class="row-txt"><div class="row-title">/</div><div class="row-sub">focus search</div></div></div>
-      <div class="row-item"><div class="row-txt"><div class="row-title">enter</div><div class="row-sub">search</div></div></div>
-      <div class="row-item"><div class="row-txt"><div class="row-title">esc</div><div class="row-sub">close</div></div></div>
-      <div class="row-item"><div class="row-txt"><div class="row-title">r</div><div class="row-sub">random</div></div></div>`;
+  openDrawer('? KEYBOARD SHORTCUTS', box => {
+    const rows = [
+      ['/', 'focus search'],
+      ['enter', 'run search'],
+      ['esc', 'close / blur'],
+      ['r', 'random pick'],
+      ['t', 'trending'],
+      ['f', 'toggle favorites drawer'],
+      ['h', 'toggle history'],
+      ['p', 'toggle presets'],
+      ['s', 'toggle settings'],
+      ['c', 'compare selected'],
+      ['v', 'toggle view'],
+      ['d', 'toggle density'],
+      ['?', 'this panel'],
+      ['0-9', 'quick filter']
+    ];
+    box.innerHTML = rows.map(([k, v]) => `
+      <div class="row-item">
+        <div class="row-txt">
+          <div class="row-title"><kbd>${k}</kbd></div>
+          <div class="row-sub">${v}</div>
+        </div>
+      </div>`).join('');
   });
 });
 
@@ -637,6 +963,8 @@ $('#drawer-close').addEventListener('click', closeDrawer);
 $('#drawer-back').addEventListener('click', closeDrawer);
 $('#modal-close').addEventListener('click', closeModal);
 $('#modal-back').addEventListener('click', closeModal);
+$('#modal2-close').addEventListener('click', closeModal2);
+$('#modal2-back').addEventListener('click', closeModal2);
 
 $('#scroll-search').addEventListener('click', () => {
   document.getElementById('search').scrollIntoView({ behavior: 'smooth' });
@@ -673,15 +1001,100 @@ $('#trend').addEventListener('click', () => {
   run($('#q').value);
 });
 
+$('#watch').addEventListener('click', () => {
+  if (state.watchTimer) {
+    clearInterval(state.watchTimer);
+    state.watchTimer = null;
+    toast('watch stopped');
+    return;
+  }
+  const q = $('#q').value.trim();
+  if (!q) return toast('enter a query first');
+  state.watchQuery = q;
+  toast('watching · 60s interval');
+  state.watchTimer = setInterval(async () => {
+    try {
+      const d = await ghSearch(state.watchQuery, 1);
+      const seenKey = state.watchQuery;
+      const prev = state.seen[seenKey] || [];
+      const fresh = (d.items || []).filter(r => !prev.includes(r.full_name));
+      if (fresh.length) {
+        state.seen[seenKey] = [...prev, ...fresh.map(r => r.full_name)].slice(-500);
+        LS.set('seen', state.seen);
+        toast('◉ ' + fresh.length + ' new');
+        if (Notification && Notification.permission === 'granted') {
+          new Notification('ghfind', { body: fresh.length + ' new for "' + state.watchQuery + '"' });
+        }
+      }
+    } catch {}
+  }, 60000);
+  if (Notification && Notification.permission === 'default') {
+    Notification.requestPermission();
+  }
+});
+
+$('#compare').addEventListener('click', async () => {
+  if (state.compare.length < 2) {
+    toast('select 2+ with ⊕ first');
+    return;
+  }
+  $('#status').innerHTML = '<span class="dim">[ … ] loading compare…</span>';
+  const repos = await Promise.all(state.compare.map(fn => ghRepo(fn)));
+  const valid = repos.filter(Boolean);
+  if (!valid.length) { toast('nothing'); return; }
+  const m = $('#modal2');
+  const body = $('#modal2-body');
+  const metrics = [
+    ['stars', r => fmt(r.stargazers_count)],
+    ['forks', r => fmt(r.forks_count)],
+    ['issues', r => fmt(r.open_issues_count)],
+    ['watchers', r => fmt(r.watchers_count)],
+    ['size', r => fmtSize(r.size)],
+    ['language', r => r.language || '—'],
+    ['license', r => r.license?.spdx_id || '—'],
+    ['created', r => (r.created_at||'').slice(0,10)],
+    ['updated', r => (r.pushed_at||'').slice(0,10)],
+    ['homepage', r => r.homepage || '—']
+  ];
+  body.innerHTML = `
+    <h3 class="m-title">⊕ COMPARE</h3>
+    <div class="cmp-grid" style="grid-template-columns: repeat(${valid.length+1}, minmax(0,1fr));">
+      <div class="cmp-cell cmp-head"></div>
+      ${valid.map(r => `<div class="cmp-cell cmp-head"><a href="${esc(r.html_url)}" target="_blank">${esc(r.full_name)}</a></div>`).join('')}
+      ${metrics.map(([label, fn]) => `
+        <div class="cmp-cell cmp-label">${label}</div>
+        ${valid.map(r => `<div class="cmp-cell">${esc(fn(r))}</div>`).join('')}
+      `).join('')}
+    </div>
+    <div class="m-actions" style="margin-top:1rem">
+      <button class="m-btn" id="cmp-clear">CLEAR SELECTION</button>
+    </div>`;
+  m.hidden = false;
+  requestAnimationFrame(() => m.classList.add('on'));
+  body.querySelector('#cmp-clear').addEventListener('click', () => {
+    state.compare = [];
+    $$('.cmp.on').forEach(el => el.classList.remove('on'));
+    closeModal2();
+  });
+  $('#status').innerHTML = '';
+});
+
 $('#view').addEventListener('click', () => {
   state.view = state.view === 'grid' ? 'list' : 'grid';
   LS.set('view', state.view);
   $('#grid').classList.toggle('list', state.view === 'list');
+  $('#view').textContent = state.view === 'grid' ? '▦ grid' : '☰ list';
+});
+
+$('#density').addEventListener('click', () => {
+  state.density = state.density === 'comfortable' ? 'compact' : 'comfortable';
+  LS.set('density', state.density);
+  document.body.classList.toggle('compact', state.density === 'compact');
+  $('#density').textContent = state.density === 'comfortable' ? '⊞ comfortable' : '⊟ compact';
 });
 
 $('#theme').addEventListener('click', () => {
-  const cur = document.documentElement.dataset.theme;
-  const next = cur === 'dark' ? 'light' : 'dark';
+  const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
   document.documentElement.dataset.theme = next;
   LS.set('theme', next);
 });
@@ -710,6 +1123,12 @@ $$('#age .chip').forEach(c => c.addEventListener('click', () => {
   setChip('#age', c.dataset.v);
   if ($('#q').value.trim()) run($('#q').value);
 }));
+$$('#size .chip').forEach(c => c.addEventListener('click', () => {
+  stopDemo();
+  state.size = c.dataset.v;
+  setChip('#size', c.dataset.v);
+  if ($('#q').value.trim()) run($('#q').value);
+}));
 $$('.tag').forEach(t => t.addEventListener('click', () => {
   stopDemo();
   $('#q').value = t.dataset.q;
@@ -723,8 +1142,17 @@ document.addEventListener('keydown', e => {
     return;
   }
   if (e.key === '/') { e.preventDefault(); $('#q').focus(); }
-  if (e.key === 'Escape') { closeModal(); closeDrawer(); }
+  if (e.key === 'Escape') { closeModal(); closeModal2(); closeDrawer(); }
   if (e.key === 'r') $('#random').click();
+  if (e.key === 't') $('#trend').click();
+  if (e.key === 'f') $('#nav-favs').click();
+  if (e.key === 'h') $('#nav-hist').click();
+  if (e.key === 'p') $('#nav-presets').click();
+  if (e.key === 's') $('#nav-settings').click();
+  if (e.key === 'c') $('#compare').click();
+  if (e.key === 'v') $('#view').click();
+  if (e.key === 'd') $('#density').click();
+  if (e.key === '?') $('#help').click();
 });
 
 function tickUTC() {
@@ -737,10 +1165,14 @@ setInterval(tickUTC, 1000);
 
 const TICK = ['NETWORK CULTURE','GAME PRESERVATION','PLATFORM RESPONSE','GHFIND','PUBLIC SIGNAL','PURE LUA','ZERO DEPS','SINGLE FILE','OPEN SOURCE'];
 const tk = $('#ticker');
-const one = TICK.map(t => `<span class="tick"><span class="dia">◆</span> ${t}</span>`).join('');
+const one = TICK.map(t => `<span class="tick"><span class="dia">◇</span> ${t}</span>`).join('');
 tk.innerHTML = one + one;
 
-drawPresets();
+$('#favc').textContent = state.favs.length;
+$('#grid').classList.toggle('list', state.view === 'list');
+$('#view').textContent = state.view === 'grid' ? '▦ grid' : '☰ list';
+$('#density').textContent = state.density === 'comfortable' ? '⊞ comfortable' : '⊟ compact';
+document.body.classList.toggle('compact', state.density === 'compact');
 
 const params = new URLSearchParams(location.search);
 const qp = params.get('q');
