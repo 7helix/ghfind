@@ -382,35 +382,63 @@ function highlight(text, q) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// markdown renderer
+// markdown renderer — allows raw HTML, blocks dangerous tags
 // ═══════════════════════════════════════════════════════════════
+function escHtml(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
 function md(src) {
   if (!src) return '';
-  let s = src
-    .replace(/\r\n/g, '\n')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
+  let s = src.replace(/\r\n/g, '\n');
 
-  const blocks = [];
+  // fenced code blocks — extract first, escaped safely
+  const codeBlocks = [];
   s = s.replace(/```(\w*)\n([\s\S]*?)```/g, (m, lang, code) => {
-    blocks.push('<pre class="md-code"><code>' + code + '</code></pre>');
-    return '\u0001' + (blocks.length - 1) + '\u0001';
+    codeBlocks.push('<pre class="md-code"><code>' + escHtml(code) + '</code></pre>');
+    return '\u0001B' + (codeBlocks.length - 1) + '\u0001B';
   });
 
+  // strip HTML comments
+  s = s.replace(/<!--[\s\S]*?-->/g, '');
+
+  // drop dangerous elements entirely
+  s = s.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, '');
+  s = s.replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, '');
+  s = s.replace(/<iframe\b[^>]*>[\s\S]*?<\/iframe>/gi, '');
+  s = s.replace(/<object\b[^>]*>[\s\S]*?<\/object>/gi, '');
+  s = s.replace(/<embed\b[^>]*>/gi, '');
+  s = s.replace(/<form\b[^>]*>[\s\S]*?<\/form>/gi, '');
+
+  // extract every remaining HTML tag into placeholders
+  const tags = [];
+  s = s.replace(/<\/?[a-zA-Z][a-zA-Z0-9-]*(?:\s[^>]*)?\/?>/g, tag => {
+    let clean = tag
+      .replace(/\s+on\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '')
+      .replace(/(href|src)\s*=\s*(?:"javascript:[^"]*"|'javascript:[^']*')/gi, '$1="about:blank"');
+    tags.push(clean);
+    return '\u0001T' + (tags.length - 1) + '\u0001T';
+  });
+
+  // escape remaining angle brackets
+  s = s.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+  // inline code
   s = s.replace(/`([^`\n]+)`/g, '<code class="md-inline">$1</code>');
 
+  // images and links
   s = s.replace(/!\[([^\]]*)\]\(([^)\s]+)[^)]*\)/g,
     '<img class="md-img" src="$2" alt="$1" loading="lazy">');
-
   s = s.replace(/\[([^\]]+)\]\(([^)\s]+)[^)]*\)/g,
     '<a class="md-a" href="$2" target="_blank" rel="noopener">$1</a>');
 
+  // bold and italic
   s = s.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
   s = s.replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>');
   s = s.replace(/__([^_\n]+)__/g, '<strong>$1</strong>');
   s = s.replace(/(^|[^_])_([^_\n]+)_/g, '$1<em>$2</em>');
 
+  // headings
   s = s.replace(/^######\s+(.+)$/gm, '<h6>$1</h6>');
   s = s.replace(/^#####\s+(.+)$/gm, '<h5>$1</h5>');
   s = s.replace(/^####\s+(.+)$/gm, '<h4>$1</h4>');
@@ -418,33 +446,42 @@ function md(src) {
   s = s.replace(/^##\s+(.+)$/gm, '<h2>$1</h2>');
   s = s.replace(/^#\s+(.+)$/gm, '<h1>$1</h1>');
 
+  // horizontal rule and blockquote
   s = s.replace(/^[-*_]{3,}\s*$/gm, '<hr class="md-hr">');
   s = s.replace(/^>\s?(.+)$/gm, '<blockquote class="md-quote">$1</blockquote>');
 
-  s = s.replace(/(<a class="md-a"[^>]*><img[^>]*><\/a>\s*){2,}/g,
+  // collapse rows of badges
+  s = s.replace(/(<a class="md-a"[^>]*>\s*<img[^>]*>\s*<\/a>\s*){2,}/g,
     m => '<div class="md-badges">' + m + '</div>');
 
+  // task lists
   s = s.replace(/^[-*]\s+\[x\]\s+(.+)$/gm, '<li class="md-task done">$1</li>');
   s = s.replace(/^[-*]\s+\[\s\]\s+(.+)$/gm, '<li class="md-task">$1</li>');
 
+  // unordered and ordered lists
   s = s.replace(/(^[-*]\s+.+(\n[-*]\s+.+)*)/gm, m => {
     const items = m.split('\n').map(l => l.replace(/^[-*]\s+/, ''));
     return '<ul class="md-ul">' + items.map(i => '<li>' + i + '</li>').join('') + '</ul>';
   });
-
   s = s.replace(/(^\d+\.\s+.+(\n\d+\.\s+.+)*)/gm, m => {
     const items = m.split('\n').map(l => l.replace(/^\d+\.\s+/, ''));
     return '<ol class="md-ol">' + items.map(i => '<li>' + i + '</li>').join('') + '</ol>';
   });
 
+  // wrap remaining plain-text lines in paragraphs
   s = s.split('\n').map(line => {
-    if (!line.trim()) return '';
-    if (/^<(h\d|ul|ol|li|pre|blockquote|hr|div|p|img|table)/i.test(line)) return line;
-    if (/^\u0001\d+\u0001$/.test(line.trim())) return line;
+    const t = line.trim();
+    if (!t) return '';
+    if (/^(?:\u0001[TB]\d+\u0001[TB])+\s*$/.test(t)) return line;
+    if (/^<(h\d|p|ul|ol|li|pre|blockquote|hr|div|section|table|details|figure|article|center)/i.test(t)) return line;
+    if (/^<\//.test(t)) return line;
     return '<p class="md-p">' + line + '</p>';
   }).join('\n');
 
-  s = s.replace(/\u0001(\d+)\u0001/g, (m, i) => blocks[+i]);
+  // restore code blocks and tags
+  s = s.replace(/\u0001B(\d+)\u0001B/g, (m, i) => codeBlocks[+i]);
+  s = s.replace(/\u0001T(\d+)\u0001T/g, (m, i) => tags[+i]);
+
   return s;
 }
 
@@ -727,8 +764,8 @@ async function openRepoModal(r) {
     readmeEl.innerHTML = '<div class="m-loading">// no readme</div>';
     return;
   }
-  readmeEl.innerHTML = '<div class="md">' + md(readme.slice(0, 12000)) +
-    (readme.length > 12000 ? '<p class="md-p"><em>… truncated</em></p>' : '') + '</div>';
+  readmeEl.innerHTML = '<div class="md">' + md(readme.slice(0, 16000)) +
+    (readme.length > 16000 ? '<p class="md-p"><em>… truncated</em></p>' : '') + '</div>';
 }
 
 function closeModal() {
