@@ -17,7 +17,13 @@ local function clr()
   os.execute(W=="\\" and "cls" or "clear")
 end
 local function sh(s)
-  return "'"..tostring(s):gsub("'","'\\''").."'" end
+  s = tostring(s)
+  if W == "\\" then
+    return '"'..s:gsub('"','\\"')..'"'
+  else
+    return "'"..s:gsub("'","'\\''").."'"
+  end
+end
 local function ue(s)
   return (tostring(s):gsub("[^%w%-%.%_%~]",function(c)
     return string.format("%%%02X",c:byte())
