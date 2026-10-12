@@ -39,7 +39,7 @@
 
 *{box-sizing:border-box}
 
-/* ── hide every scrollbar, everywhere ── */
+/* hide every scrollbar */
 * {
   scrollbar-width: none !important;
   -ms-overflow-style: none !important;
@@ -491,7 +491,7 @@ body.compact .card{padding:.8rem 1rem}
 
 .m-readme{
   background:var(--bg2);border:1px solid var(--border);border-left:2px solid var(--lime);
-  padding:1.1rem 1.3rem;max-height:420px;overflow-y:auto;margin:0 0 1.2rem;
+  padding:1.1rem 1.3rem;max-height:520px;overflow-y:auto;margin:0 0 1.2rem;
 }
 .m-loading{color:var(--muted);text-align:center;padding:1rem;font-size:.76rem;letter-spacing:.1em}
 
@@ -538,9 +538,6 @@ body.compact .card{padding:.8rem 1rem}
 .tick .dia{color:var(--lime);font-size:.55rem;text-shadow:0 0 8px var(--lime-glow)}
 .ticker:hover .ticker-track{animation-play-state:paused}
 
-/* ═══════════════════════════════════════════════════════════════
-   markdown rendering for readme
-   ═══════════════════════════════════════════════════════════════ */
 .md{
   font-family:'JetBrains Mono',ui-monospace,monospace;
   font-size:.82rem;line-height:1.7;color:var(--fg);
@@ -619,6 +616,22 @@ body.compact .card{padding:.8rem 1rem}
 .md .md-task.done::before{content:'▣';color:var(--lime);text-shadow:0 0 6px var(--lime-glow)}
 .md .md-task.done{color:var(--muted);text-decoration:line-through}
 
+/* raw HTML that READMEs ship with */
+.md center,
+.md [align="center"]{
+  display:block;
+  text-align:center;
+  margin:.6em auto;
+}
+.md img{
+  max-width:100%;
+  height:auto;
+  vertical-align:middle;
+}
+.md br{line-height:1.4}
+.md hr{border:none;border-top:1px dashed var(--border);margin:1.2em 0}
+.md a img{border:none;vertical-align:middle}
+.md p:empty{display:none}
 .md table{
   border-collapse:collapse;width:100%;margin:.6em 0;font-size:.76rem;
   display:block;
@@ -629,6 +642,13 @@ body.compact .card{padding:.8rem 1rem}
   word-break:break-word;
 }
 .md th{background:var(--bg2);color:var(--accent)}
+.md details{
+  border:1px solid var(--border);
+  padding:.6rem .9rem;
+  margin:.6em 0;
+  background:var(--bg2);
+}
+.md summary{cursor:pointer;color:var(--accent);font-weight:600}
 
 @media (max-width:960px){
   .hero{grid-template-columns:1fr;padding:3rem 1.5rem 2rem;min-height:auto;gap:2rem}
