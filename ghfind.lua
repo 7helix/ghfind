@@ -4,6 +4,7 @@ local W = package.config:sub(1,1)=="\\" and "\\" or "/"
 local C = (os.getenv("NO_COLOR")==nil)
 local HOME = os.getenv("HOME") or os.getenv("USERPROFILE") or "."
 local CFG = HOME..W..".config"..W.."ghfind"
+local ISWIN = (W == "\\")
 
 local function g(s,k)
   if not C then return tostring(s) end
@@ -14,11 +15,11 @@ local function ask(p)
   return io.read("*l") or ""
 end
 local function clr()
-  os.execute(W=="\\" and "cls" or "clear")
+  os.execute(ISWIN and "cls" or "clear")
 end
 local function sh(s)
   s = tostring(s)
-  if W == "\\" then
+  if ISWIN then
     return '"'..s:gsub('"','\\"')..'"'
   else
     return "'"..s:gsub("'","'\\''").."'"
@@ -35,8 +36,14 @@ local function nb(n)
   if n>=1e3 then return ("%.1fk"):format(n/1e3) end
   return tostring(n)
 end
+local function fsize(kb)
+  kb = tonumber(kb) or 0
+  if kb >= 1024*1024 then return ("%.1f GB"):format(kb/1024/1024) end
+  if kb >= 1024 then return ("%.1f MB"):format(kb/1024) end
+  return kb.." KB"
+end
 local function mkdir(p)
-  if W=="\\" then
+  if ISWIN then
     os.execute('if not exist "'..p..'" mkdir "'..p..'" >nul 2>nul')
   else
     os.execute("mkdir -p "..sh(p).." 2>/dev/null")
@@ -48,14 +55,14 @@ local function exists(p)
   return false
 end
 local function slp(n)
-  if W=="\\" then
+  if ISWIN then
     os.execute("ping -n "..(n+1).." 127.0.0.1 >nul")
   else
     os.execute("sleep "..n)
   end
 end
 local function notif(title,body)
-  if W=="\\" then return end
+  if ISWIN then return end
   local o=os.getenv("OSTYPE") or ""
   if o:match("darwin") then
     os.execute("osascript -e "..sh("display notification "..sh(body)..
@@ -64,8 +71,36 @@ local function notif(title,body)
     os.execute("notify-send "..sh(title).." "..sh(body).." 2>/dev/null &")
   end
 end
+local function open_url(u)
+  if ISWIN then
+    os.execute('start "" '..sh(u))
+  elseif (os.getenv("OSTYPE") or ""):match("darwin") then
+    os.execute("open "..sh(u).." &")
+  else
+    os.execute("xdg-open "..sh(u).." >/dev/null 2>&1 &")
+  end
+end
 local function trim(s)
   return (tostring(s):gsub("^%s+",""):gsub("%s+$",""))
+end
+local function hline(w)
+  print(g(string.rep("-",w or 66),"2"))
+end
+local function wrap(text, width)
+  width = width or 66
+  local lines = {}
+  local buf = ""
+  for w in tostring(text):gmatch("%S+") do
+    if #buf + #w + 1 > width then
+      lines[#lines+1] = buf
+      buf = w
+    else
+      if buf == "" then buf = w else buf = buf.." "..w end
+    end
+  end
+  if buf ~= "" then lines[#lines+1] = buf end
+  if #lines == 0 then lines[1] = "" end
+  return lines
 end
 
 local function cfgpath() return CFG..W.."config.txt" end
@@ -151,6 +186,19 @@ local function grabnum(s,key)
   local v=s:match('"'..key..'"%s*:%s*(%d+)')
   return tonumber(v) or 0
 end
+local function grabbool(s,key)
+  local v=s:match('"'..key..'"%s*:%s*(%w+)')
+  return v == "true"
+end
+local function grabtopics(chunk)
+  local block = chunk:match('"topics"%s*:%s*%[(.-)%]')
+  if not block then return {} end
+  local topics = {}
+  for t in block:gmatch('"([^"]+)"') do
+    topics[#topics+1] = t
+  end
+  return topics
+end
 
 local F = { lang="", sort="", stars="", age="", limit=5 }
 
@@ -194,15 +242,30 @@ local function run(q)
   for _,chunk in ipairs(chunks) do
     local fn=grabstr(chunk,"full_name")
     if fn then
+      local owner = fn:match("^([^/]+)/") or "-"
+      local name  = fn:match("/([^/]+)$") or fn
       items[#items+1]={
         fn=fn,
+        owner=owner,
+        name=name,
         url=grabstr(chunk,"html_url") or "",
         ds=grabstr(chunk,"description") or "",
         lg=grabstr(chunk,"language") or "-",
         st=grabnum(chunk,"stargazers_count"),
         fk=grabnum(chunk,"forks_count"),
-        dt=(grabstr(chunk,"updated_at") or ""):sub(1,10),
-        clone=grabstr(chunk,"clone_url") or ""
+        iss=grabnum(chunk,"open_issues_count"),
+        wat=grabnum(chunk,"watchers_count"),
+        sz=grabnum(chunk,"size"),
+        dt_created=(grabstr(chunk,"created_at") or ""):sub(1,10),
+        dt_updated=(grabstr(chunk,"updated_at") or ""):sub(1,10),
+        dt_pushed=(grabstr(chunk,"pushed_at") or ""):sub(1,10),
+        clone=grabstr(chunk,"clone_url") or "",
+        homepage=grabstr(chunk,"homepage") or "",
+        defbranch=grabstr(chunk,"default_branch") or "main",
+        license=grabstr(chunk,"spdx_id") or "-",
+        archived=grabbool(chunk,"archived"),
+        fork=grabbool(chunk,"fork"),
+        topics=grabtopics(chunk)
       }
     end
   end
@@ -210,43 +273,63 @@ local function run(q)
   return items,total
 end
 
-local function show(items,n)
-  if not items or #items==0 then
-    print("  "..g("nothing","2"))
+local function show_one(r, i)
+  local title = tostring(i)..". "..r.fn
+  print("  "..g(title,"1;36"))
+  if r.archived then
+    print("     "..g("[archived]","1;31"))
+  end
+  if r.fork then
+    print("     "..g("[fork]","2"))
+  end
+  hline(66)
+  if r.ds and r.ds ~= "" then
+    for _,ln in ipairs(wrap(r.ds, 66)) do
+      print("  "..g(ln,"0"))
+    end
+  else
+    print("  "..g("(no description)","2"))
+  end
+  print("")
+  print("  "..g("language:","1;33").."   "..(r.lg ~= "-" and r.lg or g("-","2")))
+  print("  "..g("stars:","1;33").."      "..g(nb(r.st),"1;32")..
+        "    "..g("forks:","1;33").."  "..g(nb(r.fk),"1;32")..
+        "    "..g("issues:","1;33").."  "..g(nb(r.iss),"1;32"))
+  print("  "..g("watchers:","1;33").."   "..nb(r.wat)..
+        "    "..g("size:","1;33").."   "..fsize(r.sz)..
+        "    "..g("license:","1;33").."  "..r.license)
+  print("  "..g("created:","1;33").."    "..r.dt_created..
+        "    "..g("updated:","1;33").." "..r.dt_updated)
+  print("  "..g("pushed:","1;33").."     "..r.dt_pushed..
+        "    "..g("branch:","1;33").."  "..r.defbranch)
+  if r.homepage ~= "" then
+    print("  "..g("homepage:","1;33").."   "..g(r.homepage,"4;34"))
+  end
+  if r.topics and #r.topics > 0 then
+    print("  "..g("topics:","1;33").."     "..g(table.concat(r.topics, ", "),"1;35"))
+  end
+  print("  "..g("repo:","1;33").."       "..g(r.url,"4;34"))
+  print("  "..g("clone:","1;33").."      "..g(r.clone,"90"))
+  print("")
+end
+
+local function show(items, n)
+  if not items or #items == 0 then
+    print("  "..g("nothing found","2"))
     return
   end
-  for i,r in ipairs(items) do
-    if i>n then break end
-    print("  "..g(tostring(i)..".","1;35").." "..
-          g(r.fn,"1;36").."  "..
-          g("star "..nb(r.st),"33").."  "..
-          g("fork "..nb(r.fk),"33"))
-    if r.ds and r.ds~="" then
-      local buf=""
-      for w in r.ds:gmatch("%S+") do
-        if #buf+#w+1>66 then
-          print("     "..g(buf,"2"))
-          buf=w
-        else
-          if buf=="" then buf=w else buf=buf.." "..w end
-        end
-      end
-      if buf~="" then print("     "..g(buf,"2")) end
-    end
-    print("     "..g(r.lg.."  "..r.dt,"90"))
-    print("     "..g(r.url,"4;34"))
-    print("")
+  for i, r in ipairs(items) do
+    if i > n then break end
+    show_one(r, i)
   end
 end
 
-local function hline(w)
-  print(g(string.rep("-",w or 50),"2"))
-end
 local function banner()
   print("")
   print("  "..g("ghfind","1;36").."  "..g("repo searcher","2"))
   print("")
 end
+
 local function hist_push(q)
   mkdir(CFG)
   local f=io.open(CFG..W.."history.txt","a")
@@ -270,14 +353,16 @@ local function do_search()
   clr()
   banner()
   print("  "..g("query","2").."  "..g(q,"1;33"))
+  print("  "..g(nb(total).." total results, showing "..math.min(#items,F.limit),"2"))
   print("")
   show(items,F.limit)
-  print("  "..g(nb(total).." total","2"))
+  print("  "..g("actions:","1;33").."  "..
+        "o=open  c=clone  f=fav  s=save preset  "..
+        "1-9=view result detail  enter=back")
   print("")
-  local a=ask("  [o]pen first  [c]lone  [f]av  [s]ave preset  [enter]back > ")
+  local a=ask("  "..g(">","1;36").." ")
   if a=="o" and items[1] then
-    if W=="\\" then os.execute('start "" '..sh(items[1].url))
-    else os.execute("xdg-open "..sh(items[1].url).." >/dev/null 2>&1 &") end
+    open_url(items[1].url)
   elseif a=="c" and items[1] then
     local d=ask("  clone to (blank=cwd) > ")
     local cmd="git clone "..sh(items[1].clone)
@@ -311,6 +396,14 @@ local function do_search()
       save_cfg(c)
       print("  "..g("preset saved: "..name,"1;32"))
       slp(1)
+    end
+  else
+    local n=tonumber(a)
+    if n and items[n] then
+      clr()
+      banner()
+      show_one(items[n], n)
+      ask("  [enter]")
     end
   end
 end
@@ -529,8 +622,7 @@ local function do_favs()
     if c=="o" then
       local i=tonumber(ask("  number > "))
       if i and list[i] then
-        if W=="\\" then os.execute('start "" '..sh(list[i].u))
-        else os.execute("xdg-open "..sh(list[i].u).." >/dev/null 2>&1 &") end
+        open_url(list[i].u)
       end
     elseif c=="d" then
       local i=tonumber(ask("  number > "))
@@ -623,7 +715,9 @@ local function do_token()
         mkdir(CFG)
         local f=io.open(CFG..W.."token","w")
         if f then f:write(v,"\n") f:close() end
-        os.execute("chmod 600 "..sh(CFG..W.."token").." 2>/dev/null")
+        if not ISWIN then
+          os.execute("chmod 600 "..sh(CFG..W.."token").." 2>/dev/null")
+        end
         print("  "..g("saved","1;32"))
         ask("  [enter]")
       end
@@ -726,7 +820,7 @@ local function do_settings()
       c.default_lang=ask("  language > ")
       save_cfg(c)
     elseif k=="5" then
-      if W=="\\" then
+      if ISWIN then
         os.execute('del /q "'..CFG..'\\seen_*.txt" >nul 2>nul')
       else
         os.execute("rm -f "..sh(CFG).."/seen_*.txt 2>/dev/null")
