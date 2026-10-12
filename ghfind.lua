@@ -73,7 +73,7 @@ local function notif(title,body)
 end
 local function open_url(u)
   if ISWIN then
-    os.execute('start "" '..sh(u))
+    os.execute('rundll32 url.dll,FileProtocolHandler '..sh(u))
   elseif (os.getenv("OSTYPE") or ""):match("darwin") then
     os.execute("open "..sh(u).." &")
   else
@@ -166,10 +166,13 @@ local function head(u)
 end
 
 local function grabstr(s,key)
+  if not s then return nil end
   local pat = '"'..key..'"%s*:%s*"'
   local p = s:find(pat)
   if not p then return nil end
-  local start = s:find('"',p+#key+2)+1
+  local start = s:find('"',p+#key+2)
+  if not start then return nil end
+  start = start + 1
   local i = start
   while i<=#s do
     local c=s:sub(i,i)
@@ -179,14 +182,17 @@ local function grabstr(s,key)
   end
   local v=s:sub(start,i-1)
   v=v:gsub('\\n','\n'):gsub('\\t','\t'):gsub('\\r','\r')
-  v=v:gsub('\\"','"'):gsub('\\\\','\\')
+  v=v:gsub('\\"','"'):gsub('\\/','/')
+  v=v:gsub('\\\\','\\')
   return v
 end
 local function grabnum(s,key)
-  local v=s:match('"'..key..'"%s*:%s*(%d+)')
+  if not s then return 0 end
+  local v=s:match('"'..key..'"%s*:%s*(%-?%d+)')
   return tonumber(v) or 0
 end
 local function grabbool(s,key)
+  if not s then return false end
   local v=s:match('"'..key..'"%s*:%s*(%w+)')
   return v == "true"
 end
@@ -198,6 +204,42 @@ local function grabtopics(chunk)
     topics[#topics+1] = t
   end
   return topics
+end
+
+local function extract_items(body)
+  local items = {}
+  if not body then return items end
+  local start = body:find('"items"%s*:%s*%[')
+  if not start then return items end
+  start = body:find('%[', start) + 1
+  local depth = 0
+  local i = start
+  local item_start = nil
+  while i <= #body do
+    local c = body:sub(i,i)
+    if c == '"' then
+      i = i + 1
+      while i <= #body do
+        local cc = body:sub(i,i)
+        if cc == '\\' then i = i + 2
+        elseif cc == '"' then break
+        else i = i + 1 end
+      end
+    elseif c == '{' then
+      if depth == 0 then item_start = i end
+      depth = depth + 1
+    elseif c == '}' then
+      depth = depth - 1
+      if depth == 0 and item_start then
+        items[#items+1] = body:sub(item_start, i)
+        item_start = nil
+      end
+    elseif c == ']' and depth == 0 then
+      break
+    end
+    i = i + 1
+  end
+  return items
 end
 
 local F = { lang="", sort="", stars="", age="", limit=5 }
@@ -234,11 +276,8 @@ local function run(q)
     local m=body:match('"message"%s*:%s*"([^"]+)"')
     return nil,m or "github said no"
   end
-  local items={}
-  local chunks={}
-  for chunk in body:gmatch('"full_name"%s*:%s*"[^"]-"[^{]-"html_url"%s*:%s*"[^"]-"') do
-    chunks[#chunks+1]=chunk
-  end
+  local chunks = extract_items(body)
+  local items = {}
   for _,chunk in ipairs(chunks) do
     local fn=grabstr(chunk,"full_name")
     if fn then
@@ -358,11 +397,13 @@ local function do_search()
   show(items,F.limit)
   print("  "..g("actions:","1;33").."  "..
         "o=open  c=clone  f=fav  s=save preset  "..
-        "1-9=view result detail  enter=back")
+        "1-9=detail  enter=back")
   print("")
   local a=ask("  "..g(">","1;36").." ")
   if a=="o" and items[1] then
     open_url(items[1].url)
+    print("  "..g("opened in browser","1;32"))
+    slp(1)
   elseif a=="c" and items[1] then
     local d=ask("  clone to (blank=cwd) > ")
     local cmd="git clone "..sh(items[1].clone)
@@ -623,6 +664,8 @@ local function do_favs()
       local i=tonumber(ask("  number > "))
       if i and list[i] then
         open_url(list[i].u)
+        print("  "..g("opened","1;32"))
+        slp(1)
       end
     elseif c=="d" then
       local i=tonumber(ask("  number > "))
