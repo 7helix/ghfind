@@ -2,14 +2,10 @@
 <html lang="en" data-theme="dark">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>◇ GHFIND — repo searcher</title>
 <meta name="description" content="GitHub repository search tool — pure Lua, single file.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐣</text></svg>">
-<meta property="og:title" content="◇ GHFIND">
-<meta property="og:description" content="github repo searcher — pure lua">
-<meta property="og:url" content="https://7helix.github.io/ghfind/">
-<meta name="twitter:card" content="summary">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Kanit:wght@600;800;900&display=swap" rel="stylesheet">
@@ -24,14 +20,16 @@
     <span class="dia">◇</span>
     <span>GHFIND</span>
   </a>
-  <div class="nav-links">
+  <button class="nav-toggle" id="nav-toggle" aria-label="menu">☰</button>
+  <div class="nav-links" id="nav-links">
     <a class="active" href="#top"><span class="dia-sm">◇</span> HOME</a>
     <a href="#search"><span class="dia-sm">◇</span> SEARCH</a>
-    <a href="#" id="nav-favs"><span class="dia-sm">◇</span> FAVS<span class="badge" id="favc">0</span></a>
-    <a href="#" id="nav-hist"><span class="dia-sm">◇</span> HISTORY</a>
-    <a href="#" id="nav-presets"><span class="dia-sm">◇</span> PRESETS</a>
-    <a href="#" id="nav-settings"><span class="dia-sm">◇</span> SETTINGS</a>
-    <a class="cta" href="https://github.com/7helix/ghfind" target="_blank"><span class="dia-sm">◇</span> GITHUB</a>
+    <a href="#" id="nav-favs"><span class="dia-sm">◇</span> FAVS<span class="badge" id="favc">0</span><kbd>f</kbd></a>
+    <a href="#" id="nav-hist"><span class="dia-sm">◇</span> HISTORY<kbd>h</kbd></a>
+    <a href="#" id="nav-presets"><span class="dia-sm">◇</span> PRESETS<kbd>p</kbd></a>
+    <a href="#" id="nav-settings"><span class="dia-sm">◇</span> SETTINGS<kbd>s</kbd></a>
+    <a href="#" id="nav-install" class="nav-mid"><span class="dia-sm">◇</span> INSTALL</a>
+    <a class="cta" href="https://github.com/7helix/ghfind" target="_blank" rel="noopener"><span class="dia-sm">◇</span> GITHUB</a>
   </div>
 </nav>
 
@@ -43,15 +41,9 @@
     </div>
     <h1 class="hero-title">GHFIND</h1>
     <div class="hero-tag">github search · pure lua · single file</div>
-    <p class="hero-desc">
-      A command-line tool for searching GitHub repositories. Filters by
-      language, stars, and date. Saves presets, tracks favorites, watches
-      for new results, and audits token permissions. Ships as one Lua file
-      with no dependencies beyond curl.
-    </p>
     <div class="hero-actions">
-      <a class="btn-green" href="https://raw.githubusercontent.com/7helix/ghfind/main/ghfind.lua" target="_blank">DOWNLOAD</a>
-      <button class="btn-outline" id="scroll-search">SEARCH NOW</button>
+      <button class="btn-green" id="copy-install">COPY INSTALL CMD</button>
+      <button class="btn-outline" id="scroll-search">SEARCH NOW<kbd>/</kbd></button>
     </div>
     <div class="info-boxes">
       <div class="info-box">
@@ -59,8 +51,8 @@
         <div class="v">ghfind.co</div>
       </div>
       <div class="info-box">
-        <div class="k">MODE</div>
-        <div class="v">SEARCH</div>
+        <div class="k">RATE LIMIT</div>
+        <div class="v" id="rate">—</div>
       </div>
       <div class="info-box">
         <div class="k">UTC</div>
@@ -105,7 +97,7 @@
     <span class="prompt">›</span>
     <input id="q" type="text" placeholder="query repositories…" autocomplete="off" spellcheck="false">
     <kbd>/</kbd>
-    <button id="go">RUN</button>
+    <button id="go">RUN<kbd>↵</kbd></button>
   </div>
 
   <div class="filters">
@@ -159,29 +151,16 @@
 
   <div class="filters">
     <div class="chips right">
-      <button class="chip" id="random">⚄ random</button>
-      <button class="chip" id="trend">▴ trending</button>
+      <button class="chip" id="reset-filters">✕ reset<kbd>x</kbd></button>
+      <button class="chip" id="random">⚄ random<kbd>r</kbd></button>
+      <button class="chip" id="trend">▴ trending<kbd>t</kbd></button>
       <button class="chip" id="watch">◉ watch</button>
-      <button class="chip" id="compare">⊕ compare</button>
-      <button class="chip" id="view">▦ grid</button>
-      <button class="chip" id="density">⊞ comfortable</button>
+      <button class="chip" id="compare">⊕ compare<kbd>c</kbd></button>
+      <button class="chip" id="view">▦ grid<kbd>v</kbd></button>
+      <button class="chip" id="density">⊞ comfy<kbd>d</kbd></button>
       <button class="chip" id="theme">◐</button>
-      <button class="chip" id="help">?</button>
+      <button class="chip" id="help">?<kbd>?</kbd></button>
     </div>
-  </div>
-
-  <div class="suggest">
-    <span class="lbl">~/try</span>
-    <button class="tag" data-q="neovim colorscheme">neovim colorscheme</button>
-    <button class="tag" data-q="tui file manager">tui file manager</button>
-    <button class="tag" data-q="http server">http server</button>
-    <button class="tag" data-q="markdown parser">markdown parser</button>
-    <button class="tag" data-q="terminal game">terminal game</button>
-    <button class="tag" data-q="lua binding">lua binding</button>
-    <button class="tag" data-q="dotfiles">dotfiles</button>
-    <button class="tag" data-q="cli tool">cli tool</button>
-    <button class="tag" data-q="static site generator">static site</button>
-    <button class="tag" data-q="json parser">json parser</button>
   </div>
 
   <p id="status" class="status"></p>
@@ -199,7 +178,7 @@
     <div class="drawer-head">
       <h3 id="drawer-title">favorites</h3>
       <div class="drawer-actions" id="drawer-actions"></div>
-      <button class="icon-btn" id="drawer-close">✕</button>
+      <button class="icon-btn" id="drawer-close">✕ <kbd>esc</kbd></button>
     </div>
     <div class="drawer-body" id="drawer-body"></div>
   </div>
@@ -208,7 +187,7 @@
 <div class="modal" id="modal" hidden>
   <div class="modal-back" id="modal-back"></div>
   <div class="modal-panel">
-    <button class="icon-btn modal-close" id="modal-close">✕</button>
+    <button class="icon-btn modal-close" id="modal-close">✕ <kbd>esc</kbd></button>
     <div class="modal-body" id="modal-body"></div>
   </div>
 </div>
@@ -216,8 +195,16 @@
 <div class="modal" id="modal2" hidden>
   <div class="modal-back" id="modal2-back"></div>
   <div class="modal-panel">
-    <button class="icon-btn modal-close" id="modal2-close">✕</button>
+    <button class="icon-btn modal-close" id="modal2-close">✕ <kbd>esc</kbd></button>
     <div class="modal-body" id="modal2-body"></div>
+  </div>
+</div>
+
+<div class="modal" id="modal3" hidden>
+  <div class="modal-back" id="modal3-back"></div>
+  <div class="modal-panel">
+    <button class="icon-btn modal-close" id="modal3-close">✕ <kbd>esc</kbd></button>
+    <div class="modal-body" id="modal3-body"></div>
   </div>
 </div>
 
@@ -277,7 +264,8 @@ const state = {
   seen: LS.get('seen', {}),
   watchTimer: null,
   watchQuery: '',
-  compare: []
+  compare: [],
+  rate: null
 };
 
 const savedTheme = LS.get('theme', null);
@@ -302,6 +290,12 @@ async function ghSearch(q, page = 1) {
   const h = { Accept: 'application/vnd.github+json' };
   if (state.token) h.Authorization = 'Bearer ' + state.token;
   const r = await fetch('https://api.github.com/search/repositories?' + p, { headers: h });
+  const remaining = r.headers.get('X-RateLimit-Remaining');
+  const limit = r.headers.get('X-RateLimit-Limit');
+  if (remaining !== null) {
+    state.rate = remaining + '/' + (limit || '?');
+    $('#rate').textContent = state.rate;
+  }
   const j = await r.json();
   if (!r.ok) throw new Error(j.message || ('HTTP ' + r.status));
   return j;
@@ -339,10 +333,17 @@ async function ghContributors(full) {
   return r.json();
 }
 
+async function ghFile(full, path) {
+  const h = { Accept: 'application/vnd.github.raw' };
+  if (state.token) h.Authorization = 'Bearer ' + state.token;
+  const r = await fetch('https://api.github.com/repos/' + full + '/contents/' + path, { headers: h });
+  if (!r.ok) return '';
+  return r.text();
+}
+
 function pushHist(q) {
   state.hist = [q, ...state.hist.filter(x => x !== q)].slice(0, 50);
   LS.set('hist', state.hist);
-  $('#favc').textContent = state.favs.length;
 }
 
 function isFav(fn) { return state.favs.some(f => f.full_name === fn); }
@@ -381,9 +382,6 @@ function highlight(text, q) {
   return out;
 }
 
-// ═══════════════════════════════════════════════════════════════
-// markdown renderer — allows raw HTML, blocks dangerous tags
-// ═══════════════════════════════════════════════════════════════
 function escHtml(s) {
   return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
@@ -392,17 +390,13 @@ function md(src) {
   if (!src) return '';
   let s = src.replace(/\r\n/g, '\n');
 
-  // fenced code blocks — extract first, escaped safely
   const codeBlocks = [];
   s = s.replace(/```(\w*)\n([\s\S]*?)```/g, (m, lang, code) => {
     codeBlocks.push('<pre class="md-code"><code>' + escHtml(code) + '</code></pre>');
     return '\u0001B' + (codeBlocks.length - 1) + '\u0001B';
   });
 
-  // strip HTML comments
   s = s.replace(/<!--[\s\S]*?-->/g, '');
-
-  // drop dangerous elements entirely
   s = s.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, '');
   s = s.replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, '');
   s = s.replace(/<iframe\b[^>]*>[\s\S]*?<\/iframe>/gi, '');
@@ -410,7 +404,6 @@ function md(src) {
   s = s.replace(/<embed\b[^>]*>/gi, '');
   s = s.replace(/<form\b[^>]*>[\s\S]*?<\/form>/gi, '');
 
-  // extract every remaining HTML tag into placeholders
   const tags = [];
   s = s.replace(/<\/?[a-zA-Z][a-zA-Z0-9-]*(?:\s[^>]*)?\/?>/g, tag => {
     let clean = tag
@@ -420,25 +413,20 @@ function md(src) {
     return '\u0001T' + (tags.length - 1) + '\u0001T';
   });
 
-  // escape remaining angle brackets
   s = s.replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
-  // inline code
   s = s.replace(/`([^`\n]+)`/g, '<code class="md-inline">$1</code>');
 
-  // images and links
   s = s.replace(/!\[([^\]]*)\]\(([^)\s]+)[^)]*\)/g,
     '<img class="md-img" src="$2" alt="$1" loading="lazy">');
   s = s.replace(/\[([^\]]+)\]\(([^)\s]+)[^)]*\)/g,
     '<a class="md-a" href="$2" target="_blank" rel="noopener">$1</a>');
 
-  // bold and italic
   s = s.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
   s = s.replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>');
   s = s.replace(/__([^_\n]+)__/g, '<strong>$1</strong>');
   s = s.replace(/(^|[^_])_([^_\n]+)_/g, '$1<em>$2</em>');
 
-  // headings
   s = s.replace(/^######\s+(.+)$/gm, '<h6>$1</h6>');
   s = s.replace(/^#####\s+(.+)$/gm, '<h5>$1</h5>');
   s = s.replace(/^####\s+(.+)$/gm, '<h4>$1</h4>');
@@ -446,19 +434,15 @@ function md(src) {
   s = s.replace(/^##\s+(.+)$/gm, '<h2>$1</h2>');
   s = s.replace(/^#\s+(.+)$/gm, '<h1>$1</h1>');
 
-  // horizontal rule and blockquote
   s = s.replace(/^[-*_]{3,}\s*$/gm, '<hr class="md-hr">');
   s = s.replace(/^>\s?(.+)$/gm, '<blockquote class="md-quote">$1</blockquote>');
 
-  // collapse rows of badges
   s = s.replace(/(<a class="md-a"[^>]*>\s*<img[^>]*>\s*<\/a>\s*){2,}/g,
     m => '<div class="md-badges">' + m + '</div>');
 
-  // task lists
   s = s.replace(/^[-*]\s+\[x\]\s+(.+)$/gm, '<li class="md-task done">$1</li>');
   s = s.replace(/^[-*]\s+\[\s\]\s+(.+)$/gm, '<li class="md-task">$1</li>');
 
-  // unordered and ordered lists
   s = s.replace(/(^[-*]\s+.+(\n[-*]\s+.+)*)/gm, m => {
     const items = m.split('\n').map(l => l.replace(/^[-*]\s+/, ''));
     return '<ul class="md-ul">' + items.map(i => '<li>' + i + '</li>').join('') + '</ul>';
@@ -468,7 +452,6 @@ function md(src) {
     return '<ol class="md-ol">' + items.map(i => '<li>' + i + '</li>').join('') + '</ol>';
   });
 
-  // wrap remaining plain-text lines in paragraphs
   s = s.split('\n').map(line => {
     const t = line.trim();
     if (!t) return '';
@@ -478,7 +461,6 @@ function md(src) {
     return '<p class="md-p">' + line + '</p>';
   }).join('\n');
 
-  // restore code blocks and tags
   s = s.replace(/\u0001B(\d+)\u0001B/g, (m, i) => codeBlocks[+i]);
   s = s.replace(/\u0001T(\d+)\u0001T/g, (m, i) => tags[+i]);
 
@@ -599,11 +581,11 @@ async function run(q, page = 1) {
   state.busy = true;
   state.q = q;
   state.page = page;
-  $('#status').innerHTML = '<span class="dim">[ … ] scanning…</span>';
+  $('#status').innerHTML = '<span class="dim">[ … ]</span>';
   try {
     const d = await ghSearch(q.trim(), page);
     state.total = d.total_count || 0;
-    $('#status').innerHTML = `<span class="ok">[ ok ]</span> ${fmt(state.total)} repos <span class="dim">// showing ${(d.items||[]).length}</span>`;
+    $('#status').innerHTML = `<span class="ok">[ ok ]</span> ${fmt(state.total)} repos <span class="dim">// ${(d.items||[]).length}</span>`;
     render(d.items || [], page > 1);
     $('#more').hidden = (d.items||[]).length < state.per || page * state.per >= Math.min(state.total, 1000);
     if (page === 1) pushHist(q.trim());
@@ -661,6 +643,21 @@ function setChip(sel, val) {
   $$(sel + ' .chip').forEach(c => c.classList.toggle('on', c.dataset.v === val));
 }
 
+function resetFilters() {
+  state.lang = '';
+  state.sort = '';
+  state.stars = '';
+  state.age = '';
+  state.size = '';
+  setChip('#langs', '');
+  setChip('#sorts', '');
+  setChip('#stars', '');
+  setChip('#age', '');
+  setChip('#size', '');
+  if ($('#q').value.trim()) run($('#q').value);
+  else toast('cleared');
+}
+
 function openDrawer(title, bodyFn, actions) {
   $('#drawer-title').textContent = title;
   $('#drawer-body').innerHTML = '';
@@ -684,7 +681,7 @@ async function openRepoModal(r) {
       <img class="m-av" src="${esc(r.owner?.avatar_url||'')}" alt="">
       <div style="flex:1;min-width:0">
         <h3 class="m-title">${esc(r.full_name)}</h3>
-        <div class="m-owner">// by ${esc(r.owner?.login||'')}</div>
+        <div class="m-owner">// ${esc(r.owner?.login||'')}</div>
         <p class="m-desc">${esc(r.description||'—')}</p>
       </div>
     </div>
@@ -698,13 +695,14 @@ async function openRepoModal(r) {
     </div>
     ${r.topics && r.topics.length ? `<div class="m-topics">${r.topics.map(t => `<a class="m-topic" href="https://github.com/topics/${esc(t)}" target="_blank" rel="noopener">#${esc(t)}</a>`).join('')}</div>` : ''}
     <div id="m-extra"></div>
-    <div id="m-readme" class="m-readme"><div class="m-loading">// loading readme…</div></div>
+    <div id="m-readme" class="m-readme"><div class="m-loading">// loading…</div></div>
     <div class="m-actions">
       <a class="m-btn primary" href="${esc(r.html_url)}" target="_blank" rel="noopener">OPEN ↗</a>
       <button class="m-btn" id="m-fav">${isFav(r.full_name) ? '★ UNFAV' : '☆ FAV'}</button>
       <button class="m-btn" id="m-copy">COPY URL</button>
       <button class="m-btn" id="m-clone">COPY CLONE</button>
       <button class="m-btn" id="m-note">NOTE</button>
+      <button class="m-btn" id="m-files">FILES</button>
       <a class="m-btn" href="${esc(r.html_url)}/issues" target="_blank" rel="noopener">ISSUES</a>
       <a class="m-btn" href="${esc(r.html_url)}/releases" target="_blank" rel="noopener">RELEASES</a>
     </div>`;
@@ -735,6 +733,7 @@ async function openRepoModal(r) {
       toast('note saved');
     }
   });
+  body.querySelector('#m-files').addEventListener('click', () => openFilesModal(r));
 
   const [readme, releases, contributors] = await Promise.all([
     ghReadme(r.full_name),
@@ -744,7 +743,7 @@ async function openRepoModal(r) {
 
   const extra = body.querySelector('#m-extra');
   if (releases.length) {
-    extra.innerHTML += `<div class="m-section"><div class="m-section-title">// latest releases</div>${releases.map(rel => `
+    extra.innerHTML += `<div class="m-section"><div class="m-section-title">// releases</div>${releases.map(rel => `
       <a class="m-release" href="${esc(rel.html_url)}" target="_blank" rel="noopener">
         <span class="m-rel-tag">${esc(rel.tag_name)}</span>
         <span class="m-rel-name">${esc(rel.name || '')}</span>
@@ -768,6 +767,68 @@ async function openRepoModal(r) {
     (readme.length > 16000 ? '<p class="md-p"><em>… truncated</em></p>' : '') + '</div>';
 }
 
+async function openFilesModal(r) {
+  const m = $('#modal3');
+  const body = $('#modal3-body');
+  body.innerHTML = `
+    <h3 class="m-title">◇ FILE BROWSER</h3>
+    <div class="m-owner">// ${esc(r.full_name)}</div>
+    <div id="fb-path" class="fb-path">/</div>
+    <div id="fb-list" class="fb-list"><div class="m-loading">// loading…</div></div>`;
+  m.hidden = false;
+  requestAnimationFrame(() => m.classList.add('on'));
+
+  const pathEl = body.querySelector('#fb-path');
+  const listEl = body.querySelector('#fb-list');
+  let currentPath = '';
+
+  async function load(path) {
+    currentPath = path;
+    pathEl.textContent = '/' + (path || '');
+    listEl.innerHTML = '<div class="m-loading">// loading…</div>';
+    const h = { Accept: 'application/vnd.github+json' };
+    if (state.token) h.Authorization = 'Bearer ' + state.token;
+    const url = 'https://api.github.com/repos/' + r.full_name + '/contents/' + path;
+    const res = await fetch(url, { headers: h });
+    if (!res.ok) { listEl.innerHTML = '<div class="m-loading">// n/a</div>'; return; }
+    const items = await res.json();
+    listEl.innerHTML = '';
+    if (path) {
+      const up = document.createElement('button');
+      up.className = 'fb-item fb-dir';
+      up.innerHTML = '<span class="fb-icon">↩</span> ..';
+      up.addEventListener('click', () => {
+        const parent = path.split('/').slice(0, -1).join('/');
+        load(parent);
+      });
+      listEl.appendChild(up);
+    }
+    items.sort((a, b) => {
+      if (a.type === b.type) return a.name.localeCompare(b.name);
+      return a.type === 'dir' ? -1 : 1;
+    });
+    items.forEach(item => {
+      const el = document.createElement('button');
+      el.className = 'fb-item' + (item.type === 'dir' ? ' fb-dir' : ' fb-file');
+      const icon = item.type === 'dir' ? '▸' : '·';
+      el.innerHTML = `<span class="fb-icon">${icon}</span> <span class="fb-name">${esc(item.name)}</span> <span class="fb-size">${item.type === 'file' ? fmtSize(Math.ceil(item.size/1024)) : ''}</span>`;
+      el.addEventListener('click', async () => {
+        if (item.type === 'dir') {
+          load(item.path);
+        } else {
+          const content = await ghFile(r.full_name, item.path);
+          body.querySelector('#fb-list').innerHTML = `
+            <button class="fb-item fb-dir" id="fb-back"><span class="fb-icon">↩</span> ..</button>
+            <pre class="fb-view">${escHtml(content.slice(0, 8000))}${content.length > 8000 ? '\n\n… truncated' : ''}</pre>`;
+          body.querySelector('#fb-back').addEventListener('click', () => load(currentPath));
+        }
+      });
+      listEl.appendChild(el);
+    });
+  }
+  load('');
+}
+
 function closeModal() {
   const m = $('#modal');
   m.classList.remove('on');
@@ -775,6 +836,11 @@ function closeModal() {
 }
 function closeModal2() {
   const m = $('#modal2');
+  m.classList.remove('on');
+  setTimeout(() => m.hidden = true, 200);
+}
+function closeModal3() {
+  const m = $('#modal3');
   m.classList.remove('on');
   setTimeout(() => m.hidden = true, 200);
 }
@@ -798,6 +864,7 @@ function exportData(type, data, filename) {
 
 $('#nav-favs').addEventListener('click', e => {
   e.preventDefault();
+  closeNav();
   openDrawer('★ FAVORITES [' + state.favs.length + ']', box => {
     if (!state.favs.length) { box.innerHTML = '<p class="empty">// empty</p>'; return; }
     state.favs.forEach((f, i) => {
@@ -855,6 +922,7 @@ $('#nav-favs').addEventListener('click', e => {
 
 $('#nav-hist').addEventListener('click', e => {
   e.preventDefault();
+  closeNav();
   openDrawer('▤ HISTORY [' + state.hist.length + ']', box => {
     if (!state.hist.length) { box.innerHTML = '<p class="empty">// empty</p>'; return; }
     state.hist.forEach(h => {
@@ -882,9 +950,10 @@ $('#nav-hist').addEventListener('click', e => {
 
 $('#nav-presets').addEventListener('click', e => {
   e.preventDefault();
+  closeNav();
   openDrawer('◆ PRESETS [' + state.presets.length + ']', box => {
     if (!state.presets.length) {
-      box.innerHTML = '<p class="empty">// no presets yet — run a search and press SAVE PRESET</p>';
+      box.innerHTML = '<p class="empty">// no presets</p>';
       return;
     }
     state.presets.forEach((p, i) => {
@@ -928,8 +997,9 @@ $('#nav-presets').addEventListener('click', e => {
 
 $('#nav-settings').addEventListener('click', e => {
   e.preventDefault();
+  closeNav();
   openDrawer('⚙ SETTINGS', box => {
-    const tok = state.token ? state.token.slice(0,8) + '…' : 'not set';
+    const tok = state.token ? state.token.slice(0,8) + '…' : '—';
     box.innerHTML = `
       <div class="setting-row">
         <div>
@@ -962,26 +1032,26 @@ $('#nav-settings').addEventListener('click', e => {
       <div class="setting-row">
         <div>
           <div class="setting-k">SEEN CACHE</div>
-          <div class="setting-v">${Object.keys(state.seen).length} queries</div>
+          <div class="setting-v">${Object.keys(state.seen).length}</div>
         </div>
         <button class="icon-btn danger" id="set-clear-seen">CLEAR</button>
       </div>
       <div class="setting-row">
         <div>
           <div class="setting-k">ALL DATA</div>
-          <div class="setting-v">favorites, history, presets, notes</div>
+          <div class="setting-v">favs · hist · presets · notes</div>
         </div>
         <button class="icon-btn danger" id="set-reset">RESET</button>
       </div>
       <div class="setting-row">
         <div>
-          <div class="setting-k">EXPORT ALL</div>
-          <div class="setting-v">download a json backup</div>
+          <div class="setting-k">EXPORT</div>
+          <div class="setting-v">json backup</div>
         </div>
         <button class="icon-btn" id="set-export">EXPORT</button>
       </div>`;
     box.querySelector('#set-tok').addEventListener('click', () => {
-      const t = prompt('paste token (leave blank to remove)', state.token ? '••••••••' : '');
+      const t = prompt('paste token (blank = remove)', state.token ? '••••••••' : '');
       if (t === null) return;
       if (t === '' || t.match(/^•+$/)) {
         state.token = '';
@@ -1015,7 +1085,7 @@ $('#nav-settings').addEventListener('click', e => {
     box.querySelector('#set-clear-seen').addEventListener('click', () => {
       state.seen = {};
       LS.set('seen', {});
-      toast('seen cache cleared');
+      toast('cleared');
       closeDrawer();
     });
     box.querySelector('#set-reset').addEventListener('click', () => {
@@ -1023,7 +1093,7 @@ $('#nav-settings').addEventListener('click', e => {
       LS.del('favs'); LS.del('hist'); LS.del('presets'); LS.del('notes'); LS.del('seen');
       state.favs = []; state.hist = []; state.presets = []; state.notes = {}; state.seen = {};
       $('#favc').textContent = 0;
-      toast('reset done');
+      toast('reset');
       closeDrawer();
     });
     box.querySelector('#set-export').addEventListener('click', () => {
@@ -1039,21 +1109,33 @@ $('#nav-settings').addEventListener('click', e => {
   });
 });
 
+$('#nav-install').addEventListener('click', e => {
+  e.preventDefault();
+  closeNav();
+  const cmd = 'curl -sSL -o ghfind.lua https://raw.githubusercontent.com/7helix/ghfind/main/ghfind.lua';
+  navigator.clipboard.writeText(cmd).then(() => {
+    toast('install cmd copied');
+  }).catch(() => {
+    prompt('copy this command', cmd);
+  });
+});
+
 $('#help').addEventListener('click', () => {
-  openDrawer('? KEYBOARD SHORTCUTS', box => {
+  openDrawer('? KEYS', box => {
     const rows = [
       ['/', 'focus search'],
-      ['enter', 'run search'],
-      ['esc', 'close / blur'],
-      ['r', 'random pick'],
+      ['↵', 'run search'],
+      ['esc', 'close'],
+      ['r', 'random'],
       ['t', 'trending'],
-      ['f', 'toggle favorites drawer'],
-      ['h', 'toggle history'],
-      ['p', 'toggle presets'],
-      ['s', 'toggle settings'],
-      ['c', 'compare selected'],
-      ['v', 'toggle view'],
-      ['d', 'toggle density'],
+      ['f', 'favorites'],
+      ['h', 'history'],
+      ['p', 'presets'],
+      ['s', 'settings'],
+      ['c', 'compare'],
+      ['v', 'grid/list'],
+      ['d', 'density'],
+      ['x', 'reset filters'],
       ['?', 'this panel']
     ];
     box.innerHTML = rows.map(([k, v]) => `
@@ -1072,9 +1154,21 @@ $('#modal-close').addEventListener('click', closeModal);
 $('#modal-back').addEventListener('click', closeModal);
 $('#modal2-close').addEventListener('click', closeModal2);
 $('#modal2-back').addEventListener('click', closeModal2);
+$('#modal3-close').addEventListener('click', closeModal3);
+$('#modal3-back').addEventListener('click', closeModal3);
 
 $('#scroll-search').addEventListener('click', () => {
   document.getElementById('search').scrollIntoView({ behavior: 'smooth' });
+});
+
+$('#copy-install').addEventListener('click', async () => {
+  const cmd = 'curl -sSL -o ghfind.lua https://raw.githubusercontent.com/7helix/ghfind/main/ghfind.lua';
+  try {
+    await navigator.clipboard.writeText(cmd);
+    toast('install cmd copied');
+  } catch {
+    prompt('copy this command', cmd);
+  }
 });
 
 $('#go').addEventListener('click', () => { stopDemo(); run($('#q').value); });
@@ -1086,6 +1180,7 @@ $('#q').addEventListener('keydown', e => {
 $('#q').addEventListener('focus', stopDemo);
 $('#q').addEventListener('input', stopDemo);
 
+$('#reset-filters').addEventListener('click', () => { stopDemo(); resetFilters(); });
 $('#more').addEventListener('click', () => { state.page++; run(state.q, state.page); });
 
 $('#random').addEventListener('click', async () => {
@@ -1095,7 +1190,7 @@ $('#random').addEventListener('click', async () => {
   if (!items.length) return toast('nothing');
   const r = items[Math.floor(Math.random() * items.length)];
   render([r]);
-  $('#status').innerHTML = '<span class="ok">[ ok ]</span> random pick';
+  $('#status').innerHTML = '<span class="ok">[ ok ]</span> random';
   $('#more').hidden = true;
 });
 
@@ -1112,13 +1207,13 @@ $('#watch').addEventListener('click', () => {
   if (state.watchTimer) {
     clearInterval(state.watchTimer);
     state.watchTimer = null;
-    toast('watch stopped');
+    toast('stopped');
     return;
   }
   const q = $('#q').value.trim();
-  if (!q) return toast('enter a query first');
+  if (!q) return toast('enter a query');
   state.watchQuery = q;
-  toast('watching · 60s interval');
+  toast('watching · 60s');
   state.watchTimer = setInterval(async () => {
     try {
       const d = await ghSearch(state.watchQuery, 1);
@@ -1142,10 +1237,10 @@ $('#watch').addEventListener('click', () => {
 
 $('#compare').addEventListener('click', async () => {
   if (state.compare.length < 2) {
-    toast('select 2+ with ⊕ first');
+    toast('select 2+ with ⊕');
     return;
   }
-  $('#status').innerHTML = '<span class="dim">[ … ] loading compare…</span>';
+  $('#status').innerHTML = '<span class="dim">[ … ]</span>';
   const repos = await Promise.all(state.compare.map(fn => ghRepo(fn)));
   const valid = repos.filter(Boolean);
   if (!valid.length) { toast('nothing'); return; }
@@ -1174,7 +1269,7 @@ $('#compare').addEventListener('click', async () => {
       `).join('')}
     </div>
     <div class="m-actions" style="margin-top:1rem">
-      <button class="m-btn" id="cmp-clear">CLEAR SELECTION</button>
+      <button class="m-btn" id="cmp-clear">CLEAR</button>
     </div>`;
   m.hidden = false;
   requestAnimationFrame(() => m.classList.add('on'));
@@ -1190,14 +1285,14 @@ $('#view').addEventListener('click', () => {
   state.view = state.view === 'grid' ? 'list' : 'grid';
   LS.set('view', state.view);
   $('#grid').classList.toggle('list', state.view === 'list');
-  $('#view').textContent = state.view === 'grid' ? '▦ grid' : '☰ list';
+  $('#view').innerHTML = state.view === 'grid' ? '▦ grid<kbd>v</kbd>' : '☰ list<kbd>v</kbd>';
 });
 
 $('#density').addEventListener('click', () => {
   state.density = state.density === 'comfortable' ? 'compact' : 'comfortable';
   LS.set('density', state.density);
   document.body.classList.toggle('compact', state.density === 'compact');
-  $('#density').textContent = state.density === 'comfortable' ? '⊞ comfortable' : '⊟ compact';
+  $('#density').innerHTML = state.density === 'comfortable' ? '⊞ comfy<kbd>d</kbd>' : '⊟ compact<kbd>d</kbd>';
 });
 
 $('#theme').addEventListener('click', () => {
@@ -1236,11 +1331,25 @@ $$('#size .chip').forEach(c => c.addEventListener('click', () => {
   setChip('#size', c.dataset.v);
   if ($('#q').value.trim()) run($('#q').value);
 }));
-$$('.tag').forEach(t => t.addEventListener('click', () => {
-  stopDemo();
-  $('#q').value = t.dataset.q;
-  run(t.dataset.q);
-}));
+
+function closeNav() {
+  const n = $('#nav-links');
+  if (n) n.classList.remove('open');
+}
+const navToggle = $('#nav-toggle');
+if (navToggle) {
+  navToggle.addEventListener('click', () => {
+    $('#nav-links').classList.toggle('open');
+  });
+}
+document.addEventListener('click', e => {
+  const n = $('#nav-links');
+  const t = $('#nav-toggle');
+  if (!n || !t) return;
+  if (n.classList.contains('open') && !n.contains(e.target) && !t.contains(e.target)) {
+    n.classList.remove('open');
+  }
+});
 
 document.addEventListener('keydown', e => {
   const tag = document.activeElement.tagName;
@@ -1249,7 +1358,7 @@ document.addEventListener('keydown', e => {
     return;
   }
   if (e.key === '/') { e.preventDefault(); $('#q').focus(); }
-  if (e.key === 'Escape') { closeModal(); closeModal2(); closeDrawer(); }
+  if (e.key === 'Escape') { closeModal(); closeModal2(); closeModal3(); closeDrawer(); closeNav(); }
   if (e.key === 'r') $('#random').click();
   if (e.key === 't') $('#trend').click();
   if (e.key === 'f') $('#nav-favs').click();
@@ -1259,6 +1368,7 @@ document.addEventListener('keydown', e => {
   if (e.key === 'c') $('#compare').click();
   if (e.key === 'v') $('#view').click();
   if (e.key === 'd') $('#density').click();
+  if (e.key === 'x') resetFilters();
   if (e.key === '?') $('#help').click();
 });
 
@@ -1277,8 +1387,8 @@ tk.innerHTML = one + one;
 
 $('#favc').textContent = state.favs.length;
 $('#grid').classList.toggle('list', state.view === 'list');
-$('#view').textContent = state.view === 'grid' ? '▦ grid' : '☰ list';
-$('#density').textContent = state.density === 'comfortable' ? '⊞ comfortable' : '⊟ compact';
+$('#view').innerHTML = state.view === 'grid' ? '▦ grid<kbd>v</kbd>' : '☰ list<kbd>v</kbd>';
+$('#density').innerHTML = state.density === 'comfortable' ? '⊞ comfy<kbd>d</kbd>' : '⊟ compact<kbd>d</kbd>';
 document.body.classList.toggle('compact', state.density === 'compact');
 
 const params = new URLSearchParams(location.search);
