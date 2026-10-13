@@ -862,11 +862,56 @@ body.compact .card { padding: .8rem 1rem; }
 }
 
 @media (max-width: 480px) {
-  .hero-title { font-size: 3rem; }
-  .hero-actions { flex-direction: column; }
-  .btn-green, .btn-outline { width: 100%; }
-  .info-boxes { grid-template-columns: 1fr; }
-  .info-box { padding: .7rem .9rem; }
-  .info-box .v { font-size: .78rem; }
-  .chips .lbl { width: 100%; margin-bottom: .2rem; }
+  .hero {
+    padding: 1.5rem 1rem 1rem;
+  }
+  .hero-title {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+  }
+  .hero-tag {
+    margin-bottom: 1rem;
+  }
+  .signal {
+    margin-bottom: 1rem;
+  }
+  .hero-actions {
+    flex-direction: column;
+    gap: .5rem;
+    margin-bottom: 1.2rem;
+  }
+  .btn-green, .btn-outline {
+    width: 100%;
+    padding: .8rem 1rem;
+  }
+  .info-boxes {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1px;
+  }
+  .info-box {
+    padding: .6rem .5rem;
+    text-align: center;
+  }
+  .info-box::before {
+    display: none;
+  }
+  .info-box .k {
+    font-size: .5rem;
+    letter-spacing: .1em;
+    margin-bottom: .2rem;
+  }
+  .info-box .v {
+    font-size: .68rem;
+    word-break: break-all;
+  }
+  .chips .lbl {
+    width: 100%;
+    margin-bottom: .2rem;
+  }
+  .search-section {
+    padding: 1.5rem .9rem;
+  }
+  .section-head {
+    margin-bottom: 1rem;
+  }
 }
