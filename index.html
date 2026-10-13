@@ -20,7 +20,7 @@
     <span class="dia">◇</span>
     <span>GHFIND</span>
   </a>
-  <button class="nav-toggle" id="nav-toggle" aria-label="menu">☰</button>
+  <button class="nav-toggle" id="nav-toggle" aria-label="menu" type="button">☰</button>
   <div class="nav-links" id="nav-links">
     <a class="active" href="#top"><span class="dia-sm">◇</span> HOME</a>
     <a href="#search"><span class="dia-sm">◇</span> SEARCH</a>
@@ -479,8 +479,8 @@ function card(r, i) {
     <div class="card-head">
       <img class="avatar" src="${esc(r.owner?.avatar_url || '')}" alt="" loading="lazy">
       <a class="repo" href="${esc(r.html_url)}" target="_blank" rel="noopener">${highlight(r.full_name, state.q)}</a>
-      <button class="fav ${fav?'on':''}" title="favorite">${fav?'★':'☆'}</button>
-      <button class="cmp ${inCompare?'on':''}" title="compare">⊕</button>
+      <button class="fav ${fav?'on':''}" title="favorite" type="button">${fav?'★':'☆'}</button>
+      <button class="cmp ${inCompare?'on':''}" title="compare" type="button">⊕</button>
     </div>
     <p class="desc">${highlight(r.description || '—', state.q)}</p>
     ${r.topics && r.topics.length ? `<div class="topics">${r.topics.slice(0,4).map(t => `<span class="topic">#${esc(t)}</span>`).join('')}</div>` : ''}
@@ -494,9 +494,9 @@ function card(r, i) {
     </div>
     <div class="card-actions">
       <a class="act" href="${esc(r.html_url)}" target="_blank" rel="noopener">OPEN ↗</a>
-      <button class="act copy">COPY</button>
-      <button class="act clone">CLONE</button>
-      <button class="act details">INFO</button>
+      <button class="act copy" type="button">COPY</button>
+      <button class="act clone" type="button">CLONE</button>
+      <button class="act details" type="button">INFO</button>
     </div>`;
   c.querySelector('.fav').addEventListener('click', e => {
     e.preventDefault();
@@ -698,11 +698,11 @@ async function openRepoModal(r) {
     <div id="m-readme" class="m-readme"><div class="m-loading">// loading…</div></div>
     <div class="m-actions">
       <a class="m-btn primary" href="${esc(r.html_url)}" target="_blank" rel="noopener">OPEN ↗</a>
-      <button class="m-btn" id="m-fav">${isFav(r.full_name) ? '★ UNFAV' : '☆ FAV'}</button>
-      <button class="m-btn" id="m-copy">COPY URL</button>
-      <button class="m-btn" id="m-clone">COPY CLONE</button>
-      <button class="m-btn" id="m-note">NOTE</button>
-      <button class="m-btn" id="m-files">FILES</button>
+      <button class="m-btn" id="m-fav" type="button">${isFav(r.full_name) ? '★ UNFAV' : '☆ FAV'}</button>
+      <button class="m-btn" id="m-copy" type="button">COPY URL</button>
+      <button class="m-btn" id="m-clone" type="button">COPY CLONE</button>
+      <button class="m-btn" id="m-note" type="button">NOTE</button>
+      <button class="m-btn" id="m-files" type="button">FILES</button>
       <a class="m-btn" href="${esc(r.html_url)}/issues" target="_blank" rel="noopener">ISSUES</a>
       <a class="m-btn" href="${esc(r.html_url)}/releases" target="_blank" rel="noopener">RELEASES</a>
     </div>`;
@@ -796,6 +796,7 @@ async function openFilesModal(r) {
     if (path) {
       const up = document.createElement('button');
       up.className = 'fb-item fb-dir';
+      up.type = 'button';
       up.innerHTML = '<span class="fb-icon">↩</span> ..';
       up.addEventListener('click', () => {
         const parent = path.split('/').slice(0, -1).join('/');
@@ -809,6 +810,7 @@ async function openFilesModal(r) {
     });
     items.forEach(item => {
       const el = document.createElement('button');
+      el.type = 'button';
       el.className = 'fb-item' + (item.type === 'dir' ? ' fb-dir' : ' fb-file');
       const icon = item.type === 'dir' ? '▸' : '·';
       el.innerHTML = `<span class="fb-icon">${icon}</span> <span class="fb-name">${esc(item.name)}</span> <span class="fb-size">${item.type === 'file' ? fmtSize(Math.ceil(item.size/1024)) : ''}</span>`;
@@ -818,7 +820,7 @@ async function openFilesModal(r) {
         } else {
           const content = await ghFile(r.full_name, item.path);
           body.querySelector('#fb-list').innerHTML = `
-            <button class="fb-item fb-dir" id="fb-back"><span class="fb-icon">↩</span> ..</button>
+            <button class="fb-item fb-dir" id="fb-back" type="button"><span class="fb-icon">↩</span> ..</button>
             <pre class="fb-view">${escHtml(content.slice(0, 8000))}${content.length > 8000 ? '\n\n… truncated' : ''}</pre>`;
           body.querySelector('#fb-back').addEventListener('click', () => load(currentPath));
         }
@@ -881,8 +883,8 @@ $('#nav-favs').addEventListener('click', e => {
         </a>
         <textarea class="fav-note" placeholder="// note" data-fn="${esc(f.full_name)}">${esc(state.notes[f.full_name] || '')}</textarea>
         <div class="row-tools">
-          <button class="danger" data-rm="${esc(f.full_name)}">REMOVE</button>
-          <button data-copy="${esc(f.full_name)}">COPY URL</button>
+          <button class="danger" data-rm="${esc(f.full_name)}" type="button">REMOVE</button>
+          <button data-copy="${esc(f.full_name)}" type="button">COPY URL</button>
         </div>`;
       wrap.querySelector('.fav-note').addEventListener('input', ev => {
         const fn = ev.target.dataset.fn;
@@ -905,8 +907,8 @@ $('#nav-favs').addEventListener('click', e => {
     });
   }, act => {
     act.innerHTML = `
-      <button class="icon-btn" id="fav-export">EXPORT</button>
-      <button class="icon-btn danger" id="fav-clear">CLEAR</button>`;
+      <button class="icon-btn" id="fav-export" type="button">EXPORT</button>
+      <button class="icon-btn danger" id="fav-clear" type="button">CLEAR</button>`;
     act.querySelector('#fav-export').addEventListener('click', () => {
       exportData('json', state.favs, 'ghfind-favorites.json');
     });
@@ -927,6 +929,7 @@ $('#nav-hist').addEventListener('click', e => {
     if (!state.hist.length) { box.innerHTML = '<p class="empty">// empty</p>'; return; }
     state.hist.forEach(h => {
       const el = document.createElement('button');
+      el.type = 'button';
       el.className = 'row-item btn-row';
       el.innerHTML = `<div class="row-txt"><div class="row-title"><span class="dia">◇</span> ${esc(h)}</div></div>`;
       el.addEventListener('click', () => {
@@ -938,7 +941,7 @@ $('#nav-hist').addEventListener('click', e => {
       box.appendChild(el);
     });
   }, act => {
-    act.innerHTML = `<button class="icon-btn danger" id="hist-clear">CLEAR</button>`;
+    act.innerHTML = `<button class="icon-btn danger" id="hist-clear" type="button">CLEAR</button>`;
     act.querySelector('#hist-clear').addEventListener('click', () => {
       if (!confirm('clear history?')) return;
       state.hist = [];
@@ -960,14 +963,14 @@ $('#nav-presets').addEventListener('click', e => {
       const el = document.createElement('div');
       el.className = 'row-item-col';
       el.innerHTML = `
-        <button class="row-item btn-row" data-run="${i}">
+        <button class="row-item btn-row" data-run="${i}" type="button">
           <div class="row-txt">
             <div class="row-title"><span class="dia">◆</span> ${esc(p.name)}</div>
             <div class="row-sub">${esc(p.q)}${p.lang ? ' · '+esc(p.lang) : ''}${p.sort ? ' · '+esc(p.sort) : ''}</div>
           </div>
         </button>
         <div class="row-tools">
-          <button data-del="${i}" class="danger">DELETE</button>
+          <button data-del="${i}" class="danger" type="button">DELETE</button>
         </div>`;
       el.querySelector('[data-run]').addEventListener('click', () => {
         $('#q').value = p.q;
@@ -1006,49 +1009,49 @@ $('#nav-settings').addEventListener('click', e => {
           <div class="setting-k">GITHUB TOKEN</div>
           <div class="setting-v">${esc(tok)}</div>
         </div>
-        <button class="icon-btn" id="set-tok">${state.token ? 'CHANGE' : 'ADD'}</button>
+        <button class="icon-btn" id="set-tok" type="button">${state.token ? 'CHANGE' : 'ADD'}</button>
       </div>
       <div class="setting-row">
         <div>
           <div class="setting-k">THEME</div>
           <div class="setting-v">${document.documentElement.dataset.theme || 'dark'}</div>
         </div>
-        <button class="icon-btn" id="set-theme">TOGGLE</button>
+        <button class="icon-btn" id="set-theme" type="button">TOGGLE</button>
       </div>
       <div class="setting-row">
         <div>
           <div class="setting-k">VIEW</div>
           <div class="setting-v">${state.view}</div>
         </div>
-        <button class="icon-btn" id="set-view">TOGGLE</button>
+        <button class="icon-btn" id="set-view" type="button">TOGGLE</button>
       </div>
       <div class="setting-row">
         <div>
           <div class="setting-k">DENSITY</div>
           <div class="setting-v">${state.density}</div>
         </div>
-        <button class="icon-btn" id="set-density">TOGGLE</button>
+        <button class="icon-btn" id="set-density" type="button">TOGGLE</button>
       </div>
       <div class="setting-row">
         <div>
           <div class="setting-k">SEEN CACHE</div>
           <div class="setting-v">${Object.keys(state.seen).length}</div>
         </div>
-        <button class="icon-btn danger" id="set-clear-seen">CLEAR</button>
+        <button class="icon-btn danger" id="set-clear-seen" type="button">CLEAR</button>
       </div>
       <div class="setting-row">
         <div>
           <div class="setting-k">ALL DATA</div>
           <div class="setting-v">favs · hist · presets · notes</div>
         </div>
-        <button class="icon-btn danger" id="set-reset">RESET</button>
+        <button class="icon-btn danger" id="set-reset" type="button">RESET</button>
       </div>
       <div class="setting-row">
         <div>
           <div class="setting-k">EXPORT</div>
           <div class="setting-v">json backup</div>
         </div>
-        <button class="icon-btn" id="set-export">EXPORT</button>
+        <button class="icon-btn" id="set-export" type="button">EXPORT</button>
       </div>`;
     box.querySelector('#set-tok').addEventListener('click', () => {
       const t = prompt('paste token (blank = remove)', state.token ? '••••••••' : '');
@@ -1269,7 +1272,7 @@ $('#compare').addEventListener('click', async () => {
       `).join('')}
     </div>
     <div class="m-actions" style="margin-top:1rem">
-      <button class="m-btn" id="cmp-clear">CLEAR</button>
+      <button class="m-btn" id="cmp-clear" type="button">CLEAR</button>
     </div>`;
   m.hidden = false;
   requestAnimationFrame(() => m.classList.add('on'));
@@ -1332,24 +1335,73 @@ $$('#size .chip').forEach(c => c.addEventListener('click', () => {
   if ($('#q').value.trim()) run($('#q').value);
 }));
 
+/* ═══════════════════════════════════════════════════════════════
+   MOBILE NAV — pointer-based, works on touch + mouse
+   ═══════════════════════════════════════════════════════════════ */
 function closeNav() {
-  const n = $('#nav-links');
-  if (n) n.classList.remove('open');
+  var nav = document.getElementById('nav-links');
+  if (nav) nav.classList.remove('open');
 }
-const navToggle = $('#nav-toggle');
-if (navToggle) {
-  navToggle.addEventListener('click', () => {
-    $('#nav-links').classList.toggle('open');
-  });
+
+function toggleNav() {
+  var nav = document.getElementById('nav-links');
+  if (nav) nav.classList.toggle('open');
 }
-document.addEventListener('click', e => {
-  const n = $('#nav-links');
-  const t = $('#nav-toggle');
-  if (!n || !t) return;
-  if (n.classList.contains('open') && !n.contains(e.target) && !t.contains(e.target)) {
-    n.classList.remove('open');
+
+(function initNav() {
+  var toggle = document.getElementById('nav-toggle');
+  var nav = document.getElementById('nav-links');
+  if (!toggle || !nav) return;
+
+  // Pointer events (covers mouse, touch, pen in modern browsers)
+  if (window.PointerEvent) {
+    toggle.addEventListener('pointerdown', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      toggleNav();
+    });
+    document.addEventListener('pointerdown', function (e) {
+      if (!nav.classList.contains('open')) return;
+      if (toggle.contains(e.target)) return;
+      if (nav.contains(e.target)) return;
+      closeNav();
+    }, true);
+  } else {
+    // Fallback for older browsers
+    toggle.addEventListener('click', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      toggleNav();
+    });
+    toggle.addEventListener('touchend', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      toggleNav();
+    }, { passive: false });
+    document.addEventListener('click', function (e) {
+      if (!nav.classList.contains('open')) return;
+      if (toggle.contains(e.target)) return;
+      if (nav.contains(e.target)) return;
+      closeNav();
+    });
   }
-});
+
+  // Close nav when any link inside is clicked
+  nav.querySelectorAll('a').forEach(function (a) {
+    a.addEventListener('click', function () {
+      closeNav();
+    });
+  });
+
+  // Close nav on window resize above breakpoint
+  var resizeTimer;
+  window.addEventListener('resize', function () {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(function () {
+      if (window.innerWidth > 900) closeNav();
+    }, 100);
+  });
+})();
 
 document.addEventListener('keydown', e => {
   const tag = document.activeElement.tagName;
