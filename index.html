@@ -226,7 +226,6 @@ const fmt = n => n >= 1e6 ? (n/1e6).toFixed(1)+'M'
 const fmtSize = kb => kb >= 1024*1024 ? (kb/1024/1024).toFixed(1)+'GB'
                    : kb >= 1024 ? (kb/1024).toFixed(1)+'MB'
                    : kb + 'KB';
-const sleep = ms => new Promise(r => setTimeout(r, ms));
 const ago = d => {
   const s = (Date.now() - new Date(d)) / 1000;
   if (s < 3600) return Math.floor(s/60)+'m';
@@ -253,7 +252,7 @@ const LS = {
 const state = {
   lang: '', sort: '', stars: '', age: '', size: '',
   page: 1, per: 12, total: 0, q: '',
-  busy: false, demo: true,
+  busy: false,
   view: LS.get('view', 'grid'),
   density: LS.get('density', 'comfortable'),
   token: sessionStorage.getItem('ghf_tok') || '',
@@ -568,7 +567,6 @@ function showLangChart(items) {
     el.addEventListener('click', () => {
       setChip('#langs', l.toLowerCase());
       state.lang = l.toLowerCase();
-      stopDemo();
       if (state.q) run(state.q);
     });
     bar.appendChild(el);
@@ -597,46 +595,6 @@ async function run(q, page = 1) {
   } finally {
     state.busy = false;
   }
-}
-
-async function typeInto(inp, text) {
-  inp.value = '';
-  for (const ch of text) {
-    if (!state.demo) return;
-    inp.value += ch;
-    await sleep(35 + Math.random() * 30);
-  }
-}
-
-const DEMOS = [
-  { q: 'neovim colorscheme', lang: '', sort: 'stars' },
-  { q: 'tui file manager',   lang: '', sort: 'stars' },
-  { q: 'http server',        lang: 'lua', sort: 'stars' },
-  { q: 'markdown parser',    lang: 'rust', sort: 'stars' }
-];
-
-async function demoLoop() {
-  await sleep(900);
-  while (state.demo) {
-    for (const d of DEMOS) {
-      if (!state.demo) return;
-      setChip('#langs', d.lang);
-      setChip('#sorts', d.sort);
-      state.lang = d.lang;
-      state.sort = d.sort;
-      await typeInto($('#q'), d.q);
-      if (!state.demo) return;
-      await sleep(220);
-      await run(d.q);
-      if (!state.demo) return;
-      await sleep(3200);
-    }
-  }
-}
-
-function stopDemo() {
-  if (!state.demo) return;
-  state.demo = false;
 }
 
 function setChip(sel, val) {
@@ -935,7 +893,6 @@ $('#nav-hist').addEventListener('click', e => {
       el.addEventListener('click', () => {
         $('#q').value = h;
         closeDrawer();
-        stopDemo();
         run(h);
       });
       box.appendChild(el);
@@ -985,7 +942,6 @@ $('#nav-presets').addEventListener('click', e => {
         setChip('#age', state.age);
         setChip('#size', state.size);
         closeDrawer();
-        stopDemo();
         run(p.q);
       });
       el.querySelector('[data-del]').addEventListener('click', () => {
@@ -1174,20 +1130,16 @@ $('#copy-install').addEventListener('click', async () => {
   }
 });
 
-$('#go').addEventListener('click', () => { stopDemo(); run($('#q').value); });
+$('#go').addEventListener('click', () => { run($('#q').value); });
 $('#q').addEventListener('keydown', e => {
-  stopDemo();
   if (e.key === 'Enter') run($('#q').value);
   if (e.key === 'Escape') { $('#q').value = ''; $('#q').blur(); }
 });
-$('#q').addEventListener('focus', stopDemo);
-$('#q').addEventListener('input', stopDemo);
 
-$('#reset-filters').addEventListener('click', () => { stopDemo(); resetFilters(); });
+$('#reset-filters').addEventListener('click', () => { resetFilters(); });
 $('#more').addEventListener('click', () => { state.page++; run(state.q, state.page); });
 
 $('#random').addEventListener('click', async () => {
-  stopDemo();
   const d = await ghSearch($('#q').value.trim() || 'lua');
   const items = d.items || [];
   if (!items.length) return toast('nothing');
@@ -1198,7 +1150,6 @@ $('#random').addEventListener('click', async () => {
 });
 
 $('#trend').addEventListener('click', () => {
-  stopDemo();
   const d = new Date(); d.setDate(d.getDate() - 7);
   $('#q').value = 'created:>' + d.toISOString().slice(0,10);
   state.sort = 'stars';
@@ -1305,39 +1256,31 @@ $('#theme').addEventListener('click', () => {
 });
 
 $$('#langs .chip').forEach(c => c.addEventListener('click', () => {
-  stopDemo();
   state.lang = c.dataset.v;
   setChip('#langs', c.dataset.v);
   if ($('#q').value.trim()) run($('#q').value);
 }));
 $$('#sorts .chip').forEach(c => c.addEventListener('click', () => {
-  stopDemo();
   state.sort = c.dataset.v;
   setChip('#sorts', c.dataset.v);
   if ($('#q').value.trim()) run($('#q').value);
 }));
 $$('#stars .chip').forEach(c => c.addEventListener('click', () => {
-  stopDemo();
   state.stars = c.dataset.v;
   setChip('#stars', c.dataset.v);
   if ($('#q').value.trim()) run($('#q').value);
 }));
 $$('#age .chip').forEach(c => c.addEventListener('click', () => {
-  stopDemo();
   state.age = c.dataset.v;
   setChip('#age', c.dataset.v);
   if ($('#q').value.trim()) run($('#q').value);
 }));
 $$('#size .chip').forEach(c => c.addEventListener('click', () => {
-  stopDemo();
   state.size = c.dataset.v;
   setChip('#size', c.dataset.v);
   if ($('#q').value.trim()) run($('#q').value);
 }));
 
-/* ═══════════════════════════════════════════════════════════════
-   MOBILE NAV — pointer-based, works on touch + mouse
-   ═══════════════════════════════════════════════════════════════ */
 function closeNav() {
   var nav = document.getElementById('nav-links');
   if (nav) nav.classList.remove('open');
@@ -1353,7 +1296,6 @@ function toggleNav() {
   var nav = document.getElementById('nav-links');
   if (!toggle || !nav) return;
 
-  // Pointer events (covers mouse, touch, pen in modern browsers)
   if (window.PointerEvent) {
     toggle.addEventListener('pointerdown', function (e) {
       e.preventDefault();
@@ -1367,7 +1309,6 @@ function toggleNav() {
       closeNav();
     }, true);
   } else {
-    // Fallback for older browsers
     toggle.addEventListener('click', function (e) {
       e.preventDefault();
       e.stopPropagation();
@@ -1386,14 +1327,12 @@ function toggleNav() {
     });
   }
 
-  // Close nav when any link inside is clicked
   nav.querySelectorAll('a').forEach(function (a) {
     a.addEventListener('click', function () {
       closeNav();
     });
   });
 
-  // Close nav on window resize above breakpoint
   var resizeTimer;
   window.addEventListener('resize', function () {
     clearTimeout(resizeTimer);
@@ -1446,11 +1385,8 @@ document.body.classList.toggle('compact', state.density === 'compact');
 const params = new URLSearchParams(location.search);
 const qp = params.get('q');
 if (qp) {
-  state.demo = false;
   $('#q').value = qp;
   run(qp);
-} else {
-  demoLoop();
 }
 </script>
 
