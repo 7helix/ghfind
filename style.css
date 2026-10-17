@@ -613,7 +613,7 @@ body.compact .card { padding: .8rem 1rem; }
 .fb-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: ui-monospace, monospace; }
 .fb-size { color: var(--muted); font-size: .68rem; }
 .fb-view {
-  background: #050a12; border: 1px solid var(--border); border-left: 2px solid var(--lime);
+  background: #020510; border: 1px solid var(--border); border-left: 2px solid var(--lime);
   padding: .8rem 1rem; font-size: .72rem; line-height: 1.55;
   white-space: pre-wrap; word-break: break-word; color: #a8f04a;
   margin: .6rem 0 0; max-height: 500px; overflow-y: auto;
