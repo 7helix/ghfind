@@ -1282,65 +1282,30 @@ $$('#size .chip').forEach(c => c.addEventListener('click', () => {
 }));
 
 function closeNav() {
-  var nav = document.getElementById('nav-links');
+  const nav = document.getElementById('nav-links');
   if (nav) nav.classList.remove('open');
 }
 
-function toggleNav() {
-  var nav = document.getElementById('nav-links');
-  if (nav) nav.classList.toggle('open');
-}
-
-(function initNav() {
-  var toggle = document.getElementById('nav-toggle');
-  var nav = document.getElementById('nav-links');
-  if (!toggle || !nav) return;
-
-  if (window.PointerEvent) {
-    toggle.addEventListener('pointerdown', function (e) {
-      e.preventDefault();
-      e.stopPropagation();
-      toggleNav();
-    });
-    document.addEventListener('pointerdown', function (e) {
-      if (!nav.classList.contains('open')) return;
-      if (toggle.contains(e.target)) return;
-      if (nav.contains(e.target)) return;
-      closeNav();
-    }, true);
-  } else {
-    toggle.addEventListener('click', function (e) {
-      e.preventDefault();
-      e.stopPropagation();
-      toggleNav();
-    });
-    toggle.addEventListener('touchend', function (e) {
-      e.preventDefault();
-      e.stopPropagation();
-      toggleNav();
-    }, { passive: false });
-    document.addEventListener('click', function (e) {
-      if (!nav.classList.contains('open')) return;
-      if (toggle.contains(e.target)) return;
-      if (nav.contains(e.target)) return;
-      closeNav();
-    });
+document.addEventListener('click', function(e) {
+  const toggle = e.target.closest('#nav-toggle');
+  const nav = document.getElementById('nav-links');
+  
+  if (toggle) {
+    if (nav) nav.classList.toggle('open');
+    return;
   }
-
-  nav.querySelectorAll('a').forEach(function (a) {
-    a.addEventListener('click', function () {
-      closeNav();
-    });
-  });
-
-  var resizeTimer;
-  window.addEventListener('resize', function () {
-    clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(function () {
-      if (window.innerWidth > 900) closeNav();
-    }, 100);
-  });
-})();
+  
+  if (nav && nav.contains(e.target) && e.target.tagName === 'A') {
+    nav.classList.remove('open');
+    return;
+  }
+  
+  if (nav && nav.classList.contains('open')) {
+    if (!nav.contains(e.target)) {
+      nav.classList.remove('open');
+    }
+  }
+});
 
 document.addEventListener('keydown', e => {
   const tag = document.activeElement.tagName;
